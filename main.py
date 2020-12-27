@@ -9,7 +9,7 @@ import time #Ping
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 activity = discord.Streaming(name='o.help でヘルプ♪', url="https://www.twitch.tv/discord")
-embed_help = discord.Embed(title="Aoi コマンドリスト",description="※現在は仮運用中です\no.neko…にゃーん\no.ping…BotのPingを取得するよ\n\n（このBotは半自動です。たまに人が会話します）")
+embed_help = discord.Embed(title="Aoi コマンドリスト",description="※現在は仮運用中です\no.neko…にゃーん\no.invite…このBotの招待リンクを表示するよ\no.ping…BotのPingを取得するよ\n\n（このBotは半自動です。たまに人が会話します）")
 verifyed = ['HereBranch']
 
 #接続に必要なオブジェクトを生成
@@ -65,6 +65,10 @@ async def on_message(message):
     if message.content == prefix + 'neko':
         await message.channel.send('にゃーん')
         
+    #Botの招待リンク表示
+    if message.content == prefix + 'invite':
+        await message.channel.send('**AoiBot招待リンク**:\nhttps://www.herebots.ml/aoi')
+
     #Ping
     if message.content == prefix + 'ping':
        time_then = time.monotonic()
