@@ -28,8 +28,8 @@ async def on_message(message):
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
         return
-    GLOBAL_CH_NAME = "konoha-global" #グローバルチャットのチャンネル名
-    GLOBAL_WEBHOOK_NAME = "konoha-global" #グローバルチャットのWebhook名
+    GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
+    GLOBAL_WEBHOOK_NAME = "aoi-global" #グローバルチャットのWebhook名
     if message.content == prefix + 'help':
         await message.channel.send(embed=embed_help)
         
@@ -45,7 +45,7 @@ async def on_message(message):
             webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
 
             if webhook is None:
-                # そのチャンネルに konoha-global というWebhookは無かったので無視
+                # そのチャンネルに aoi-global というWebhookは無かったので無視
                 continue
             if message.author.name in verifyed:
                 if message.author.name == 'HereBranch':
