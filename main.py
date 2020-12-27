@@ -7,9 +7,9 @@ import time #Ping
 
 #変数群
 TOKEN = os.getenv("TOKEN") #トークン
-prefix = 'n.' #Prefix
-activity = discord.Streaming(name='n.help でヘルプ♪', url="https://www.twitch.tv/discord")
-embed_help = discord.Embed(title="Konoha コマンドリスト",description="※現在は仮運用中です\nn.neko…にゃーん\nn.ping…BotのPingを取得するよ\n\n（このBotは半自動です。たまに人が会話します）")
+prefix = 'o.' #Prefix
+activity = discord.Streaming(name='o.help でヘルプ♪', url="https://www.twitch.tv/discord")
+embed_help = discord.Embed(title="Aoi コマンドリスト",description="※現在は仮運用中です\no.neko…にゃーん\no.ping…BotのPingを取得するよ\n\n（このBotは半自動です。たまに人が会話します）")
 verifyed = ['HereBranch']
 
 #接続に必要なオブジェクトを生成
@@ -19,7 +19,7 @@ client = discord.Client()
 @client.event
 async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
-    print('ログインしました')
+    print('[Aoi] ログインしました')
     await client.change_presence(activity=activity)
 
 #メッセージ受信時に動作する処理

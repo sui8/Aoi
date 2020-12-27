@@ -5,7 +5,7 @@ app = Flask("")
 
 @app.route("/")
 def main():
-  return "Konoha Status: Online"
+  return "Aoi Status: Online"
 
 def run():
   app.run("0.0.0.0", port=8080)
