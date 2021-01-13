@@ -5,6 +5,7 @@ from server import keep_alive
 from data.vips import verifyed, moderators, OWNER_ID
 from data.stickers import stickers
 import re #正規表現
+import asyncio #タイマー
 
 #変数群
 TOKEN = os.getenv("TOKEN") #トークン
@@ -57,6 +58,38 @@ async def on_message(message):
         await message.channel.edit(name=GLOBAL_CH_NAME)
         embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないでください。",color=0x00ff00)
         await message.channel.send(embed=embed)
+
+        #送信元特定
+        global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+        #余計なパーツ除去
+        global_msg_from = str(global_msg_from)
+        global_msg_from = re.sub(r"\D", "", global_msg_from)
+        global_msg_from = int(global_msg_from)
+
+        channels = client.get_all_channels()
+        global_join_from = message.guild.name
+        #global_join_from_icon = message.guild.icon_url assetになってしまう
+        global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+        embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff)
+        #embed.set_thumbnail(url="画像url")
+
+        for channel in global_channels:
+          ch_webhooks = await channel.webhooks()
+          webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+          ch_id = webhook.id
+            
+          if webhook is None:
+            # そのチャンネルに global というWebhookは無かったので無視
+            continue
+
+          #送信元はスキップ
+          if ch_id == global_msg_from:
+            continue
+
+          #Aoi設定
+          await webhook.send(username="Aoi ✅🤖",
+            avatar_url="https://www.herebots.ml/data/aoiicon.jpg", embed=embed)
+
       except:
         await message.channel.send('**エラーが発生しました。**\nチャンネルの全権限がAoiにある事を確認してください。')
 
@@ -114,20 +147,22 @@ async def on_message(message):
       with open('data/gbans.txt') as f:
         gbans = [s.strip() for s in f.readlines()]
 
-      print(gbans)
-      print(message.author.id)
       #GBAN者は遮断
-      print(gbans[0])
+      gbans = list(map(int, gbans))
+
       if message.author.id in gbans:
         embed = discord.Embed(title=":x: 送信失敗",description="あなたはグローバルBANされているため、メッセージは遮断されました。",color=0xff0000)
         await message.channel.send(embed=embed)
       else:
+        #まず送信待機中
+        await message.add_reaction("a:loading:785106469078958081")
         #スタンプか
         if len(message.stickers) != 0:
           #余計なパーツ除去
           global_sticker = str(message.stickers)
           global_sticker = re.sub(r"\D", "", global_sticker)
           global_sticker = int(global_sticker)
+          #print(message.stickers[0].image_url) assetにして読ませてもあり？
           if global_sticker in stickers:
             global_attachments_on = 3
             global_sticker_id = str(global_sticker)
@@ -286,6 +321,7 @@ async def on_message(message):
             embed.set_image(url="https://www.herebots.ml/stickers/" + global_sticker)
             await webhook.send(username=global_authorname,
             avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+            print(message.stickers)
           
           #スタンプ（在庫なし）
           elif LenOut == 5:
@@ -304,7 +340,12 @@ async def on_message(message):
           else:
             embed = discord.Embed(title="添付ファイル",description="未認証ユーザーによる添付ファイルは遮断されました。",color=0xff0000)
             await webhook.send(username=global_authorname,
-            avatar_url=message.author.avatar_url_as(format="png"), embed=embed)            
+            avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+
+        await message.clear_reaction("a:loading:785106469078958081")
+        await message.add_reaction(":finish:798910961255317524")
+        await asyncio.sleep(5)
+        await message.clear_reaction(":finish:798910961255317524")            
 
 
         
