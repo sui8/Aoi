@@ -63,7 +63,7 @@ async def on_message(message):
       try:
         await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
         await message.channel.edit(name=GLOBAL_CH_NAME)
-        embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないでください。",color=0x00ff00)
+        embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しても構いません。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
         await message.channel.send(embed=embed)
 
         #送信元特定
@@ -254,21 +254,51 @@ async def on_message(message):
             if Verifymode != 1:
               globalcontent = globalcontent[:200]
               LenOut = 1
+              #URLが含まれているか
               globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
-              print(globalcontent_url)
+
+              #URLが含まれていればマスクする
+              if len(globalcontent_url) != 0:
+                globalcontent_url = str(globalcontent_url)
+                globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+                globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+                print(globalcontent)
             else:
               LenOut = 0
+              #URLが含まれているか
               globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
-              print(globalcontent_url)
+
+              #URLが含まれていればマスクする
+              if len(globalcontent_url) != 0:
+                globalcontent_url = str(globalcontent_url)
+                globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+                globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+                print(globalcontent_url_mask)
           else:
             LenOut = 0
+            #URLが含まれているか
             globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
-            print(globalcontent_url)
+
+            #URLが含まれていればマスクする
+            if len(globalcontent_url) != 0:
+              globalcontent_url = globalcontent_url[0]
+              globalcontent_url = str(globalcontent_url)
+              globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+              globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+              print(globalcontent_url_mask)
+
         #添付ファイルあり
         elif global_attachments_on == 1:
           LenOut = 2
+          #URLが含まれているか
           globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
-          print(globalcontent_url)
+
+          #URLが含まれていればマスクする
+          if len(globalcontent_url) != 0:
+            globalcontent_url = str(globalcontent_url)
+            globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+            globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+            print(globalcontent)
         #添付ファイルのみ
         elif global_attachments_on == 2:
           LenOut = 3
@@ -356,8 +386,8 @@ async def on_message(message):
 
         #送信確認リアクション
         await message.add_reaction(":finish:798910961255317524")
-        await asyncio.sleep(5)
         await message.clear_reaction("a:loading:785106469078958081")
+        await asyncio.sleep(5)
         await message.clear_reaction(":finish:798910961255317524")            
 
 
