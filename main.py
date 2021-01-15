@@ -12,6 +12,8 @@ TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 Verifymode = 0
 activity = discord.Streaming(name='o.help でヘルプ', url="https://www.twitch.tv/discord")
+
+#Embed群
 embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
 embed_verify_help = discord.Embed(title='グローバル認証制度について',description="準備中")
 lettersover = discord.Embed(title="文字数制限超過",description="未認証ユーザーによる文字数制限超過の為、200文字を超える投稿は遮断されました。",color=0xff0000)
@@ -35,12 +37,17 @@ async def on_ready():
     print('[Aoi] ログインしました')
     await client.change_presence(activity=activity)
 
+
 #メッセージ受信時に動作する処理
 @client.event
 async def on_message(message):
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
-        return
+      return
+
+    #DMの場合無視する
+    if isinstance(message.channel, discord.channel.DMChannel):
+      return
 
     GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
     GLOBAL_WEBHOOK_NAME = "AoiGlobal" #グローバルチャットのWebhook名
@@ -137,8 +144,14 @@ async def on_message(message):
         await message.channel.send(embed=embed)      
 
 
-    #DM対策必須
-    if message.channel.name == GLOBAL_CH_NAME:
+    #先にDM対策必須
+    #AoiGlobalのWebhookを探す   
+    webhook_there = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+    webhook_there = str(webhook_there)
+ 
+    #グローバルチャット
+    #先述のAoiGlobalがあるかないか
+    if webhook_there != 'None':
       # globalの名前をもつチャンネルに投稿されたので、メッセージを転送する
       #if message.content == null:
       #  pass
@@ -321,7 +334,6 @@ async def on_message(message):
             embed.set_image(url="https://www.herebots.ml/stickers/" + global_sticker)
             await webhook.send(username=global_authorname,
             avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
-            print(message.stickers)
           
           #スタンプ（在庫なし）
           elif LenOut == 5:
@@ -342,9 +354,10 @@ async def on_message(message):
             await webhook.send(username=global_authorname,
             avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
 
-        await message.clear_reaction("a:loading:785106469078958081")
+        #送信確認リアクション
         await message.add_reaction(":finish:798910961255317524")
         await asyncio.sleep(5)
+        await message.clear_reaction("a:loading:785106469078958081")
         await message.clear_reaction(":finish:798910961255317524")            
 
 
