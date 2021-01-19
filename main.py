@@ -36,6 +36,11 @@ async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
     print('[Aoi] ログインしました')
     await client.change_presence(activity=activity)
+    ready_log = client.get_channel(800380094375264318)
+    bot_guilds = len(client.guilds)
+    embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\nサーバー数: " + str(bot_guilds))
+    embed.set_author(name="Aoi 起動ログ",icon_url="https://www.herebots.ml/data/aoiicon.jpg")
+    await ready_log.send(embed=embed)
 
 
 #メッセージ受信時に動作する処理
@@ -63,7 +68,7 @@ async def on_message(message):
       try:
         await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
         await message.channel.edit(name=GLOBAL_CH_NAME)
-        embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しても構いません。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
+        embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
         await message.channel.send(embed=embed)
 
         #送信元特定
@@ -117,11 +122,15 @@ async def on_message(message):
         try:
           gban_tmp = gban_tmp[1]
           gban_tmp = int(gban_tmp)
-          print(gban_tmp)
           with open('data/gbans.txt', mode='a') as f:
             f.write(str(gban_tmp) + '\n')
           embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\nID:" + str(gban_tmp),color=0x00ff00)
           await message.channel.send(embed=embed)
+          gban_name = await client.fetch_user(int(gban_tmp))
+          embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
+          embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+          gban_log = client.get_channel(800380075861213234)
+          await gban_log.send(embed=embed)
         except:
           embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
           await message.channel.send(embed=embed)
@@ -131,11 +140,15 @@ async def on_message(message):
         try:
           gban_tmp = gban_tmp[1]
           gban_tmp = int(gban_tmp)
-          print(gban_tmp)
           with open('data/gbans.txt', mode='a') as f:
             f.write(str(gban_tmp) + '\n')
           embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\nID:" + str(gban_tmp),color=0x00ff00)
           await message.channel.send(embed=embed)
+          gban_name = await client.fetch_user(int(gban_tmp))
+          embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
+          embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+          gban_log = client.get_channel(800380075861213234)
+          await gban_log.send(embed=embed)
         except:
           embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
           await message.channel.send(embed=embed)  
@@ -246,6 +259,7 @@ async def on_message(message):
 
         channels = client.get_all_channels()
         global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+        
 
 
         #認証による文字数確認
@@ -259,10 +273,13 @@ async def on_message(message):
 
               #URLが含まれていればマスクする
               if len(globalcontent_url) != 0:
-                globalcontent_url = str(globalcontent_url)
-                globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-                globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-                print(globalcontent)
+                if globalcontent_url[:23] == 'https://tenor.com/view/':
+                  pass
+                else:
+                  globalcontent_url = str(globalcontent_url)
+                  globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+                  globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+                  print(globalcontent)
             else:
               LenOut = 0
               #URLが含まれているか
@@ -270,10 +287,13 @@ async def on_message(message):
 
               #URLが含まれていればマスクする
               if len(globalcontent_url) != 0:
-                globalcontent_url = str(globalcontent_url)
-                globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-                globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-                print(globalcontent_url_mask)
+                if globalcontent_url[:23] == 'https://tenor.com/view/':
+                  pass
+                else:
+                  globalcontent_url = str(globalcontent_url)
+                  globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+                  globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+                  print(globalcontent)
           else:
             LenOut = 0
             #URLが含まれているか
@@ -281,11 +301,13 @@ async def on_message(message):
 
             #URLが含まれていればマスクする
             if len(globalcontent_url) != 0:
-              globalcontent_url = globalcontent_url[0]
-              globalcontent_url = str(globalcontent_url)
-              globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-              globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-              print(globalcontent_url_mask)
+              if globalcontent_url[:23] == 'https://tenor.com/view/':
+                pass
+              else:
+                globalcontent_url = str(globalcontent_url)
+                globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+                globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+                print(globalcontent)
 
         #添付ファイルあり
         elif global_attachments_on == 1:
@@ -295,10 +317,13 @@ async def on_message(message):
 
           #URLが含まれていればマスクする
           if len(globalcontent_url) != 0:
-            globalcontent_url = str(globalcontent_url)
-            globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-            globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-            print(globalcontent)
+            if globalcontent_url[:23] == 'https://tenor.com/view/':
+              pass
+            else:
+              globalcontent_url = str(globalcontent_url)
+              globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
+              globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
+              print(globalcontent)
         #添付ファイルのみ
         elif global_attachments_on == 2:
           LenOut = 3
@@ -320,7 +345,9 @@ async def on_message(message):
         #送信スタート
         for channel in global_channels:
           ch_webhooks = await channel.webhooks()
+          print(ch_webhooks)
           webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+          print(webhook)
           ch_id = webhook.id
             
           if webhook is None:
