@@ -6,6 +6,7 @@ from data.vips import verifyed, moderators, OWNER_ID
 from data.stickers import stickers
 import re #正規表現
 import asyncio #タイマー
+import datetime #日時取得
 
 #変数群
 TOKEN = os.getenv("TOKEN") #トークン
@@ -36,11 +37,15 @@ async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
     print('[Aoi] ログインしました')
     await client.change_presence(activity=activity)
-    ready_log = client.get_channel(800380094375264318)
-    bot_guilds = len(client.guilds)
-    embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\nサーバー数: " + str(bot_guilds))
-    embed.set_author(name="Aoi 起動ログ",icon_url="https://www.herebots.ml/data/aoiicon.jpg")
-    await ready_log.send(embed=embed)
+    #起動メッセージをHereBots Hubに送信（チャンネルが存在しない場合、スルー）
+    try:
+      ready_log = client.get_channel(800380094375264318)
+      bot_guilds = len(client.guilds)
+      embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\nサーバー数: " + str(bot_guilds), timestamp=datetime.datetime.now())
+      embed.set_footer(text="Aoi",icon_url="https://www.herebots.ml/data/aoiicon.jpg")
+      await ready_log.send(embed=embed)
+    except:
+      pass
 
 
 #メッセージ受信時に動作する処理
