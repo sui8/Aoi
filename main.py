@@ -292,8 +292,11 @@ async def on_message(message):
                 globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
                 #簡易メンション対策
-                if "@everyone" in message.content:
-                  globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                if "@everyone" or "@here" in message.content:
+                  if "@everyone" in message.content:
+                    globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                  if "@here" in message.content:
+                    globalcontent = globalcontent.replace("@here", "`@here`")
 
                 #URLが含まれていればマスクする
                 if len(globalcontent_url) != 0:
@@ -310,8 +313,11 @@ async def on_message(message):
                 globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
                 #簡易メンション対策
-                if "@everyone" in message.content:
-                  globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                if "@everyone" or "@here" in message.content:
+                  if "@everyone" in message.content:
+                    globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                  if "@here" in message.content:
+                    globalcontent = globalcontent.replace("@here", "`@here`")
 
                 #URLが含まれていればマスクする
                 if len(globalcontent_url) != 0:
@@ -328,8 +334,11 @@ async def on_message(message):
               globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
               #簡易メンション対策
-              if "@everyone" in message.content:
-                globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+              if "@everyone" or "@here" in message.content:
+                if "@everyone" in message.content:
+                  globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                if "@here" in message.content:
+                  globalcontent = globalcontent.replace("@here", "`@here`")
 
               #URLが含まれていればマスクする
               if len(globalcontent_url) != 0:
@@ -348,8 +357,11 @@ async def on_message(message):
             globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
             #簡易メンション対策
-            if "@everyone" in message.content:
-              globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+            if "@everyone" or "@here" in message.content:
+              if "@everyone" in message.content:
+                globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+              if "@here" in message.content:
+                globalcontent = globalcontent.replace("@here", "`@here`")
 
             #URLが含まれていればマスクする
             if len(globalcontent_url) != 0:
