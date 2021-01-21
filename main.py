@@ -12,7 +12,6 @@ import datetime #日時取得
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 Verifymode = 0
-activity = discord.Streaming(name='o.help でヘルプ', url="https://www.twitch.tv/discord")
 
 #Embed群
 embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
@@ -36,11 +35,12 @@ with open('data/gbans.txt') as f:
 async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
     print('[Aoi] ログインしました')
+    bot_guilds = len(client.guilds)
+    activity = discord.Streaming(name='o.help でヘルプ | ' + str(bot_guilds) + 'Guilds ', url="https://www.twitch.tv/discord")
     await client.change_presence(activity=activity)
     #起動メッセージをHereBots Hubに送信（チャンネルが存在しない場合、スルー）
     try:
       ready_log = client.get_channel(800380094375264318)
-      bot_guilds = len(client.guilds)
       embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\nサーバー数: " + str(bot_guilds), timestamp=datetime.datetime.now())
       embed.set_footer(text="Aoi",icon_url="https://www.herebots.ml/data/aoiicon.jpg")
       await ready_log.send(embed=embed)
@@ -58,10 +58,6 @@ async def on_message(message):
     #DMの場合無視する
     if isinstance(message.channel, discord.channel.DMChannel):
       return
-
-    #メンションテスト
-    if "@everyone" in message.content:
-      print("everyoned")
 
     GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
     GLOBAL_WEBHOOK_NAME = "AoiGlobal" #グローバルチャットのWebhook名
@@ -289,7 +285,7 @@ async def on_message(message):
                 globalcontent = globalcontent[:200]
                 LenOut = 1
                 #URLが含まれているか
-                globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+                globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
                 #簡易メンション対策
                 if "@everyone" or "@here" in message.content:
@@ -298,19 +294,18 @@ async def on_message(message):
                   if "@here" in message.content:
                     globalcontent = globalcontent.replace("@here", "`@here`")
 
-                #URLが含まれていればマスクする
-                if len(globalcontent_url) != 0:
-                  if globalcontent_url[:23] == 'https://tenor.com/view/':
-                    pass
-                  else:
-                    globalcontent_url = str(globalcontent_url)
-                    globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-                    globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-                    print(globalcontent)
+                #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+                if globalcontent[:23] == 'https://tenor.com/view/':
+                  pass
+                elif len(globalcontent_urllist) != 0:
+                  for url in globalcontent_urllist:
+                    url = str(url)
+                    url_mask = '`' + url + '`'
+                    globalcontent = globalcontent.replace(url, url_mask)
               else:
                 LenOut = 0
                 #URLが含まれているか
-                globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+                globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
                 #簡易メンション対策
                 if "@everyone" or "@here" in message.content:
@@ -319,19 +314,18 @@ async def on_message(message):
                   if "@here" in message.content:
                     globalcontent = globalcontent.replace("@here", "`@here`")
 
-                #URLが含まれていればマスクする
-                if len(globalcontent_url) != 0:
-                  if globalcontent_url[:23] == 'https://tenor.com/view/':
-                    pass
-                  else:
-                    globalcontent_url = str(globalcontent_url)
-                    globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-                    globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-                    print(globalcontent)
+                #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+                if globalcontent[:23] == 'https://tenor.com/view/':
+                  pass
+                elif len(globalcontent_urllist) != 0:
+                  for url in globalcontent_urllist:
+                    url = str(url)
+                    url_mask = '`' + url + '`'
+                    globalcontent = globalcontent.replace(url, url_mask)
             else:
               LenOut = 0
               #URLが含まれているか
-              globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+              globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
               #簡易メンション対策
               if "@everyone" or "@here" in message.content:
@@ -340,21 +334,21 @@ async def on_message(message):
                 if "@here" in message.content:
                   globalcontent = globalcontent.replace("@here", "`@here`")
 
-              #URLが含まれていればマスクする
-              if len(globalcontent_url) != 0:
-                if globalcontent_url[:23] == 'https://tenor.com/view/':
-                  pass
-                else:
-                  globalcontent_url = str(globalcontent_url)
-                  globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-                  globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-                  print(globalcontent)
+              #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+              print(globalcontent[:23])
+              if globalcontent[:23] == 'https://tenor.com/view/':
+                pass
+              elif len(globalcontent_urllist) != 0:
+                for url in globalcontent_urllist:
+                  url = str(url)
+                  url_mask = '`' + url + '`'
+                  globalcontent = globalcontent.replace(url, url_mask)
 
           #添付ファイルあり
           elif global_attachments_on == 1:
             LenOut = 2
             #URLが含まれているか
-            globalcontent_url = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+            globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
             #簡易メンション対策
             if "@everyone" or "@here" in message.content:
@@ -363,15 +357,14 @@ async def on_message(message):
               if "@here" in message.content:
                 globalcontent = globalcontent.replace("@here", "`@here`")
 
-            #URLが含まれていればマスクする
-            if len(globalcontent_url) != 0:
-              if globalcontent_url[:23] == 'https://tenor.com/view/':
-                pass
-              else:
-                globalcontent_url = str(globalcontent_url)
-                globalcontent_url_mask = '`' + str(globalcontent_url) + '`'
-                globalcontent = globalcontent.replace(globalcontent_url, globalcontent_url_mask)
-                print(globalcontent)
+            #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+            if globalcontent[:23] == 'https://tenor.com/view/':
+              pass
+            elif len(globalcontent_urllist) != 0:
+              for url in globalcontent_urllist:
+                url = str(url)
+                url_mask = '`' + url + '`'
+                globalcontent = globalcontent.replace(url, url_mask)
           #添付ファイルのみ
           elif global_attachments_on == 2:
             LenOut = 3
