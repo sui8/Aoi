@@ -36,7 +36,7 @@ async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
     print('[Aoi] ログインしました')
     bot_guilds = len(client.guilds)
-    activity = discord.Streaming(name='o.help でヘルプ | ' + str(bot_guilds) + 'Guilds ', url="https://www.twitch.tv/discord")
+    activity = discord.Streaming(name='o.help でヘルプ | ' + str(bot_guilds) + ' Guilds ', url="https://www.twitch.tv/discord")
     await client.change_presence(activity=activity)
     #起動メッセージをHereBots Hubに送信（チャンネルが存在しない場合、スルー）
     try:
@@ -294,9 +294,14 @@ async def on_message(message):
                   if "@here" in message.content:
                     globalcontent = globalcontent.replace("@here", "`@here`")
 
-                #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+                #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
                 if globalcontent[:23] == 'https://tenor.com/view/':
                   pass
+                elif globalcontent[:19] == 'https://discord.gg/':
+                  for url in globalcontent_urllist:
+                    url = str(url)
+                    url_mask = '||`' + url + '`||'
+                    globalcontent = globalcontent.replace(url, url_mask)
                 elif len(globalcontent_urllist) != 0:
                   for url in globalcontent_urllist:
                     url = str(url)
@@ -314,9 +319,14 @@ async def on_message(message):
                   if "@here" in message.content:
                     globalcontent = globalcontent.replace("@here", "`@here`")
 
-                #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+                #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
                 if globalcontent[:23] == 'https://tenor.com/view/':
                   pass
+                elif globalcontent[:19] == 'https://discord.gg/':
+                  for url in globalcontent_urllist:
+                    url = str(url)
+                    url_mask = '||`' + url + '`||'
+                    globalcontent = globalcontent.replace(url, url_mask)
                 elif len(globalcontent_urllist) != 0:
                   for url in globalcontent_urllist:
                     url = str(url)
@@ -334,10 +344,14 @@ async def on_message(message):
                 if "@here" in message.content:
                   globalcontent = globalcontent.replace("@here", "`@here`")
 
-              #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
-              print(globalcontent[:23])
+              #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
               if globalcontent[:23] == 'https://tenor.com/view/':
                 pass
+              elif globalcontent[:19] == 'https://discord.gg/':
+                for url in globalcontent_urllist:
+                  url = str(url)
+                  url_mask = '||`' + url + '`||'
+                  globalcontent = globalcontent.replace(url, url_mask)
               elif len(globalcontent_urllist) != 0:
                 for url in globalcontent_urllist:
                   url = str(url)
@@ -357,9 +371,14 @@ async def on_message(message):
               if "@here" in message.content:
                 globalcontent = globalcontent.replace("@here", "`@here`")
 
-            #URLが含まれていればマスクする（Tenorのみ許可、但しEmbedにする必要あり）
+            #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
             if globalcontent[:23] == 'https://tenor.com/view/':
               pass
+            elif globalcontent[:19] == 'https://discord.gg/':
+              for url in globalcontent_urllist:
+                url = str(url)
+                url_mask = '||`' + url + '`||'
+                globalcontent = globalcontent.replace(url, url_mask)
             elif len(globalcontent_urllist) != 0:
               for url in globalcontent_urllist:
                 url = str(url)
@@ -458,11 +477,6 @@ async def on_message(message):
           await asyncio.sleep(5)
           await message.clear_reaction(":finish:798910961255317524")            
 
-
-        
-    #せやな
-    if message.content == 'せやな':
-        await message.channel.send('せやな')
 
     #認証申請
     if message.content == prefix + 'verify':
