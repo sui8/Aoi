@@ -12,6 +12,8 @@ import datetime #日時取得
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 Verifymode = 0
+ICON = os.getenv("ICON") #AoiアイコンURL
+STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
 
 #Embed群
 embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
@@ -42,7 +44,7 @@ async def on_ready():
     try:
       ready_log = client.get_channel(800380094375264318)
       embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\nサーバー数: " + str(bot_guilds), timestamp=datetime.datetime.now())
-      embed.set_footer(text="Aoi",icon_url="https://www.herebots.ml/data/aoiicon.jpg")
+      embed.set_footer(text="Aoi",icon_url=ICON)
       await ready_log.send(embed=embed)
     except:
       pass
@@ -113,7 +115,7 @@ async def on_message(message):
 
             #Aoi設定
             await webhook.send(username="Aoi ✅🤖",
-              avatar_url="https://www.herebots.ml/data/aoiicon.jpg", embed=embed)
+              avatar_url=ICON, embed=embed)
 
         except:
           await message.channel.send('**エラーが発生しました。**\nチャンネルの全権限がAoiにある事を確認してください。')
@@ -448,7 +450,7 @@ async def on_message(message):
             elif LenOut == 4:
               #file = discord.File("stickers/" + global_sticker_id + ".gif")
               embed = discord.Embed(title="スタンプ")
-              embed.set_image(url="https://www.herebots.ml/stickers/" + global_sticker)
+              embed.set_image(url=STICKER_URL + global_sticker)
               await webhook.send(username=global_authorname,
               avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
             
