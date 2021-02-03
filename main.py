@@ -17,7 +17,7 @@ ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
 
 #Embed群
-embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
+embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
 embed_verify_help = discord.Embed(title='グローバル認証制度について',description="準備中")
 lettersover = discord.Embed(title="文字数制限超過",description="未認証ユーザーによる文字数制限超過の為、200文字を超える投稿は遮断されました。",color=0xff0000)
 
@@ -29,8 +29,12 @@ intents.members = True
 client = discord.Client(intents=intents)
 
 #GBANリスト読み込み
-with open('data/gbans.txt') as f:
-    gbans = [s.strip() for s in f.readlines()]
+with open('data/gbans.json', encoding='utf-8') as f:
+    gbans = json.load(f)
+
+#グローバルチャットBAN時のテンプレート
+gban_template = {"reason" : "", "enforcer" : "", "datetime" : ""}
+
 
 
 #起動時に動作する処理
@@ -54,6 +58,7 @@ async def on_ready():
 #メッセージ受信時に動作する処理
 @client.event
 async def on_message(message):
+    global gbans, gban_template
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
       return
@@ -150,14 +155,35 @@ async def on_message(message):
             await message.channel.send(embed=embed)
 
           else:
-            with open('data/gbans.txt', mode='a') as f:
-              f.write(str(gban_tmp) + '\n')
-            embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
-            embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
-            gban_log = client.get_channel(800380075861213234)
-            await gban_log.send(embed=embed)
-            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-            await message.channel.send(embed=embed)
+            #JSONでBAN記録読み込み
+            with open('data/gbans.json', mode='r',encoding='utf-8') as f:
+              gbans = json.load(f)
+            
+            #既にBANされているか
+            if gban_tmp in list(gbans.keys()):
+              embed = discord.Embed(title=":x: エラー",description="そのユーザーは既にグローバルチャットBANされています。",color=0xff0000)
+              await message.channel.send(embed=embed)
+
+            #されていなければ実行
+            else:
+              #JSONでBAN記録書き込み＆データうめ
+              gbans[int(gban_tmp)] = gban_template
+              gbans[int(gban_tmp)]["reason"] = ""
+              gbans[int(gban_tmp)]["enforcer"] = message.author.id
+              datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+              gbans[int(gban_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
+
+              #JSONに書き込み
+              with open('data/gbans.json', mode='w') as f:
+                json.dump(gbans, f, indent=4)
+
+              embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
+              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              gban_log = client.get_channel(800380075861213234)
+              await gban_log.send(embed=embed)
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
+              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              await message.channel.send(embed=embed)
 
       elif message.author.id in moderators:
         gban_tmp = str(message.content)
@@ -168,7 +194,7 @@ async def on_message(message):
         except:
           embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
           await message.channel.send(embed=embed)
-
+        
         else:
           try:
             gban_name = await client.fetch_user(int(gban_tmp))
@@ -177,21 +203,55 @@ async def on_message(message):
             await message.channel.send(embed=embed)
 
           else:
-            with open('data/gbans.txt', mode='a') as f:
-              f.write(str(gban_tmp) + '\n')
-            embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
-            embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
-            gban_log = client.get_channel(800380075861213234)
-            await gban_log.send(embed=embed)
-            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-            await message.channel.send(embed=embed)
+            #JSONでBAN記録読み込み
+            with open('data/gbans.json', mode='r',encoding='utf-8') as f:
+              gbans = json.load(f)
+            
+            #既にBANされているか
+            if gban_tmp in list(gbans.keys()):
+              embed = discord.Embed(title=":x: エラー",description="そのユーザーは既にグローバルチャットBANされています。",color=0xff0000)
+              await message.channel.send(embed=embed)
+
+            #されていなければ実行
+            else:
+              #JSONでBAN記録書き込み＆データうめ
+              gbans[int(gban_tmp)] = gban_template
+              gbans[int(gban_tmp)]["reason"] = ""
+              gbans[int(gban_tmp)]["enforcer"] = message.author.id
+              datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+              gbans[int(gban_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
+
+              #JSONに書き込み
+              with open('data/gbans.json', mode='w') as f:
+                json.dump(gbans, f, indent=4)
+
+              embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
+              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              gban_log = client.get_channel(800380075861213234)
+              await gban_log.send(embed=embed)
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
+              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              await message.channel.send(embed=embed)
 
     #グローバルBANリスト
     if message.content == prefix + "gbanlist":
-      with open('data/gbans.txt') as f:
-        gbans = [s.strip() for s in f.readlines()]
-      print(gbans)
-      print("pong!")
+      with open('data/gbans.json', mode='r', encoding='utf-8') as f:
+        gbans = json.load(f)
+
+      gbans_keys = list(gbans.keys())
+      gbans_len = len(gbans)
+      gban_userlist = ""
+
+      for i in gbans_keys:
+        try:
+          gban_userinfo = client.get_user(int(i))
+        except:
+          gban_userinfo = "Unknown User"
+
+        gban_userlist = gban_userlist + "・**" + str(gban_userinfo) + "** [ID:" + str(i) + "]\n"
+
+      embed = discord.Embed(title="グローバルチャットBANリスト",description=gban_userlist + "BAN者合計:** " + str(gbans_len) + "**人")
+      await message.channel.send(embed=embed)
 
 
     #先にDM対策必須
@@ -210,11 +270,11 @@ async def on_message(message):
       if not message.content == prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
 
         #GBANリスト読み込み
-        with open('data/gbans.txt') as f:
-          gbans = [s.strip() for s in f.readlines()]
+        with open('data/gbans.json', mode='r', encoding='utf-8') as f:
+          gbans = json.load(f)
 
         #GBAN者は遮断
-        gbans = list(map(int, gbans))
+        gbans = list(gbans.keys())
 
         if message.author.id in gbans:
           embed = discord.Embed(title=":x: 送信失敗",description="あなたはグローバルBANされているため、メッセージは遮断されました。",color=0xff0000)
