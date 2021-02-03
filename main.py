@@ -7,6 +7,7 @@ from data.stickers import stickers
 import re #正規表現
 import asyncio #タイマー
 import datetime #日時取得
+import json #jsonファイル読み込み
 
 #変数群
 TOKEN = os.getenv("TOKEN") #トークン
@@ -130,46 +131,67 @@ async def on_message(message):
     '''
 
     #グローバルBAN
-    if message.content.startswith(prefix + 'gban'):
-      if message.author.id  == OWNER_ID:
+    if message.content.split(' ')[0] == prefix + "gban":
+      if message.author.id == OWNER_ID:
         gban_tmp = str(message.content)
         gban_tmp = gban_tmp.split(' ')
         try:
           gban_tmp = gban_tmp[1]
           gban_tmp = int(gban_tmp)
-          with open('data/gbans.txt', mode='a') as f:
-            f.write(str(gban_tmp) + '\n')
-          embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\nID:" + str(gban_tmp),color=0x00ff00)
-          await message.channel.send(embed=embed)
-          gban_name = await client.fetch_user(int(gban_tmp))
-          embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
-          embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
-          gban_log = client.get_channel(800380075861213234)
-          await gban_log.send(embed=embed)
         except:
           embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
           await message.channel.send(embed=embed)
+        
+        else:
+          try:
+            gban_name = await client.fetch_user(int(gban_tmp))
+          except:
+            embed = discord.Embed(title=":x: エラー",description="存在しないユーザーです。",color=0xff0000)
+            await message.channel.send(embed=embed)
+
+          else:
+            with open('data/gbans.txt', mode='a') as f:
+              f.write(str(gban_tmp) + '\n')
+            embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
+            embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+            gban_log = client.get_channel(800380075861213234)
+            await gban_log.send(embed=embed)
+            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
+            await message.channel.send(embed=embed)
+
       elif message.author.id in moderators:
         gban_tmp = str(message.content)
         gban_tmp = gban_tmp.split(' ')
         try:
           gban_tmp = gban_tmp[1]
           gban_tmp = int(gban_tmp)
-          with open('data/gbans.txt', mode='a') as f:
-            f.write(str(gban_tmp) + '\n')
-          embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\nID:" + str(gban_tmp),color=0x00ff00)
-          await message.channel.send(embed=embed)
-          gban_name = await client.fetch_user(int(gban_tmp))
-          embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
-          embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
-          gban_log = client.get_channel(800380075861213234)
-          await gban_log.send(embed=embed)
         except:
           embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
-          await message.channel.send(embed=embed)  
-      else:
-        embed = discord.Embed(title=":x: エラー",description="このコマンドを実行する権限がありません。",color=0xff0000)
-        await message.channel.send(embed=embed)      
+          await message.channel.send(embed=embed)
+
+        else:
+          try:
+            gban_name = await client.fetch_user(int(gban_tmp))
+          except:
+            embed = discord.Embed(title=":x: エラー",description="存在しないユーザーです。",color=0xff0000)
+            await message.channel.send(embed=embed)
+
+          else:
+            with open('data/gbans.txt', mode='a') as f:
+              f.write(str(gban_tmp) + '\n')
+            embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
+            embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+            gban_log = client.get_channel(800380075861213234)
+            await gban_log.send(embed=embed)
+            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
+            await message.channel.send(embed=embed)
+
+    #グローバルBANリスト
+    if message.content == prefix + "gbanlist":
+      with open('data/gbans.txt') as f:
+        gbans = [s.strip() for s in f.readlines()]
+      print(gbans)
+      print("pong!")
 
 
     #先にDM対策必須
