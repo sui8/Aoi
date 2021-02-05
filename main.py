@@ -351,6 +351,63 @@ async def on_message(message):
       embed = discord.Embed(title="グローバルチャットBANリスト",description=gban_userlist + "BAN者合計:** " + str(gbans_len) + "**人")
       await message.channel.send(embed=embed)
 
+    #グローバルチャットBANユーザー情報取得
+    if message.content.split(' ')[0] == prefix + "gbaninfo":
+      gbaninfo_tmp = str(message.content)
+      gbaninfo_tmp = gbaninfo_tmp.split(' ')
+
+      #引数が正しく設定されているか
+      try:
+        gbaninfo_tmp = gbaninfo_tmp[1]
+        gbaninfo_tmp = int(gbaninfo_tmp)
+      except:
+        embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
+        await message.channel.send(embed=embed)
+      
+      #引数として与えられたユーザーは存在するのか（Deleted User判別）
+      else:
+        try:
+          gbaninfo_name = await client.fetch_user(int(gbaninfo_tmp))
+        except:
+          embed = discord.Embed(title=":x: エラー",description="存在しないユーザーです。",color=0xff0000)
+          await message.channel.send(embed=embed)
+
+        else:
+          #JSONでBAN記録読み込み
+          with open('data/gbans.json', mode='r',encoding='utf-8') as f:
+            gbans = json.load(f)
+          
+          #BANされていないか
+          if not str(gbaninfo_tmp) in gbans:
+            embed = discord.Embed(title=":x: エラー",description="そのユーザーはグローバルチャットBANされていません。",color=0xff0000)
+            await message.channel.send(embed=embed)
+
+          #されていれば情報収集
+          else:
+            #JSONでBAN記録削除
+            gbaninfo_reason = gbans[str(gbaninfo_tmp)]["reason"]
+            print(gbaninfo_reason)
+            gbaninfo_enforcer = gbans[str(gbaninfo_tmp)]["enforcer"]
+            gbaninfo_datetime = gbans[str(gbaninfo_tmp)]["datetime"]
+
+            #実行者は存在するか
+            try:
+              gbaninfo_enforcer_name = await client.fetch_user(int(gbaninfo_enforcer))
+            except:
+              gbaninfo_enforcer_name = "Deleted User"
+
+            #理由はあるか
+            if len(gbaninfo_reason) == 0:
+              gbaninfo_reason = "理由が入力されていません"
+
+            embed = discord.Embed(title="グローバルチャットBAN情報",description="")
+            embed.add_field(name="ユーザー名", value=str(gbaninfo_name) + " [ID:" + str(gbaninfo_tmp) + "]", inline=False)
+            embed.add_field(name="理由", value=str(gbaninfo_reason), inline=False)
+            embed.add_field(name="実行者", value=str(gbaninfo_enforcer_name) + " [ID:" + str(gbaninfo_enforcer) + "]", inline=True)
+            embed.add_field(name="実行日時", value=str(gbaninfo_datetime), inline=True)
+            #embed.set_thumbnail(url=message.author.avatar_url_as(format="png"))
+            await message.channel.send(embed=embed)
+
 
     #先にDM対策必須
     #AoiGlobalのWebhookを探す   
