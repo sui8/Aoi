@@ -35,6 +35,9 @@ with open('data/gbans.json', encoding='utf-8') as f:
 #グローバルチャットBAN時のテンプレート
 gban_template = {"reason" : "", "enforcer" : "", "datetime" : ""}
 
+#グローバルチャットNGワード
+global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help"]
+
 
 
 #起動時に動作する処理
@@ -58,7 +61,7 @@ async def on_ready():
 #メッセージ受信時に動作する処理
 @client.event
 async def on_message(message):
-    global gbans, gban_template
+    global gbans, gban_template, global_ng
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
       return
@@ -103,8 +106,9 @@ async def on_message(message):
           global_join_from = message.guild.name
           #global_join_from_icon = message.guild.icon_url assetになってしまう
           global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
-          embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff)
-          #embed.set_thumbnail(url="画像url")
+          embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
+          #embed.set_thumbnail(url=message.guild.icon_url(format='png'))
+
 
           for channel in global_channels:
             ch_webhooks = await channel.webhooks()
@@ -122,6 +126,7 @@ async def on_message(message):
             #Aoi設定
             await webhook.send(username="Aoi ✅🤖",
               avatar_url=ICON, embed=embed)
+
 
         except:
           await message.channel.send('**エラーが発生しました。**\nチャンネルの全権限がAoiにある事を確認してください。')
@@ -178,11 +183,11 @@ async def on_message(message):
                 json.dump(gbans, f, indent=4)
 
               embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0xff0000)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
               embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
               await message.channel.send(embed=embed)
 
       elif message.author.id in moderators:
@@ -225,12 +230,12 @@ async def on_message(message):
               with open('data/gbans.json', mode='w') as f:
                 json.dump(gbans, f, indent=4)
 
-              embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
-              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               await message.channel.send(embed=embed)
 
     #グローバルBAN解除
@@ -276,11 +281,11 @@ async def on_message(message):
 
               #成功通知
               embed = discord.Embed(title="グローバルチャットBAN解除",description="**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] " + "がグローバルチャットBAN解除されました。", color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
               embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBAN解除が正常に実行されました。\n**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] ",color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
               await message.channel.send(embed=embed)
 
       elif message.author.id in moderators:
@@ -324,11 +329,11 @@ async def on_message(message):
 
               #成功通知
               embed = discord.Embed(title="グローバルチャットBAN解除",description="**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] " + "がグローバルチャットBAN解除されました。", color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
               embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBAN解除が正常に実行されました。\n**" + str(ungban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-              embed.set_author(name="実行者: " + str(message.author),icon_url=message.author.avatar_url_as(format="png"))
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
               await message.channel.send(embed=embed)
 
     #グローバルBANリスト
@@ -422,7 +427,8 @@ async def on_message(message):
       #  pass
 
       #コマンドだけ除外（リスト化しておけば後で使えるかも...）
-      if not message.content == prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
+      if not message.content in global_ng:
+        #if message.content != prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
 
         #GBANリスト読み込み
         with open('data/gbans.json', mode='r', encoding='utf-8') as f:
