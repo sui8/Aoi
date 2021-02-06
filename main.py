@@ -8,6 +8,7 @@ import re #正規表現
 import asyncio #タイマー
 import datetime #日時取得
 import json #jsonファイル読み込み
+import pya3rt #Talk API
 
 #変数群
 TOKEN = os.getenv("TOKEN") #トークン
@@ -15,9 +16,10 @@ prefix = 'o.' #Prefix
 Verifymode = 0
 ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
+TALKAPI_KEY = os.getenv("TALKAPI_KEY") #Talk API Key
 
 #Embed群
-embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\no.gbaninfo <ユーザーID>ユーザーのグローバルチャットBANに関する情報を確認できるよ\no.globallist…グローバルチャットに接続中のサーバー一覧を表示するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
+embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\no.gbaninfo <ユーザーID>ユーザーのグローバルチャットBANに関する情報を確認できるよ\no.globallist…グローバルチャットに接続中のサーバー一覧を表示するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）\n'aoi-talk'というチャンネルを作って話しかけてみよう！")
 embed_verify_help = discord.Embed(title='グローバル認証制度について',description="準備中")
 lettersover = discord.Embed(title="文字数制限超過",description="未認証ユーザーによる文字数制限超過の為、200文字を超える投稿は遮断されました。",color=0xff0000)
 
@@ -66,6 +68,14 @@ async def on_ready():
     except:
       pass
 
+  
+#Talk API
+def talkapi(message):
+  talkclient = pya3rt.TalkClient(TALKAPI_KEY)
+  talk_reply = talkclient.talk(message)
+  return talk_reply['results'][0]['reply']
+
+
 
 #メッセージ受信時に動作する処理
 @client.event
@@ -78,6 +88,11 @@ async def on_message(message):
     #DMの場合無視する
     if isinstance(message.channel, discord.channel.DMChannel):
       return
+
+    #Talk API
+    if message.channel.name == "aoi-talk":
+      talk_message_reply = talkapi(message.content)
+      await message.channel.send(talk_message_reply)
 
     GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
     GLOBAL_WEBHOOK_NAME = "AoiGlobal" #グローバルチャットのWebhook名
@@ -803,6 +818,7 @@ async def on_message(message):
     #Botの招待リンク表示
     if message.content == prefix + 'invite':
         await message.channel.send('**Aoi招待リンク**:\nhttps://www.herebots.ml/aoi')
+
         
 '''
 #メッセージが削除された時のイベント

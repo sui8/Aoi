@@ -8,6 +8,7 @@ authors = ["Hiroshi Deco <decodeco.7000@gmail.com>"]
 python = "^3.8"
 Flask = "^1.1.2"
 "discord.py" = "^1.6.0"
+pya3rt = "^1.1"
 
 [tool.poetry.dev-dependencies]
 
