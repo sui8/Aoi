@@ -17,7 +17,7 @@ ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
 
 #Embed群
-embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
+embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\no.gbaninfo <ユーザーID>ユーザーのグローバルチャットBANに関する情報を確認できるよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
 embed_verify_help = discord.Embed(title='グローバル認証制度について',description="準備中")
 lettersover = discord.Embed(title="文字数制限超過",description="未認証ユーザーによる文字数制限超過の為、200文字を超える投稿は遮断されました。",color=0xff0000)
 
@@ -182,12 +182,14 @@ async def on_message(message):
               with open('data/gbans.json', mode='w') as f:
                 json.dump(gbans, f, indent=4)
 
-              embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0xff0000)
-              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
+              #if message.author.id == OWNER_ID:
+              #  
+              embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。", color=0xff0000, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
-              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルBANが正常に実行されました。\n**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               await message.channel.send(embed=embed)
 
       elif message.author.id in moderators:
@@ -280,12 +282,12 @@ async def on_message(message):
                 json.dump(gbans, f, indent=4)
 
               #成功通知
-              embed = discord.Embed(title="グローバルチャットBAN解除",description="**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] " + "がグローバルチャットBAN解除されました。", color=0x00ff00)
-              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
+              embed = discord.Embed(title="グローバルチャットBAN解除",description="**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] " + "がグローバルチャットBAN解除されました。", color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
-              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBAN解除が正常に実行されました。\n**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] ",color=0x00ff00)
-              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBAN解除が正常に実行されました。\n**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] ",color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               await message.channel.send(embed=embed)
 
       elif message.author.id in moderators:
@@ -328,12 +330,12 @@ async def on_message(message):
                 json.dump(gbans, f, indent=4)
 
               #成功通知
-              embed = discord.Embed(title="グローバルチャットBAN解除",description="**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] " + "がグローバルチャットBAN解除されました。", color=0x00ff00)
-              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
+              embed = discord.Embed(title="グローバルチャットBAN解除",description="**" + str(ungban_name) + "** [ID:" + str(ungban_tmp) + "] " + "がグローバルチャットBAN解除されました。", color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               gban_log = client.get_channel(800380075861213234)
               await gban_log.send(embed=embed)
-              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBAN解除が正常に実行されました。\n**" + str(ungban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00)
-              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"), timestamp=datetime.datetime.now())
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットBAN解除が正常に実行されました。\n**" + str(ungban_name) + "** [ID:" + str(gban_tmp) + "] ",color=0x00ff00, timestamp=datetime.datetime.now())
+              embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
               await message.channel.send(embed=embed)
 
     #グローバルBANリスト
@@ -742,6 +744,16 @@ async def on_message(message):
     if message.content == prefix + 'invite':
         await message.channel.send('**Aoi招待リンク**:\nhttps://www.herebots.ml/aoi')
         
+'''
+#メッセージが削除された時のイベント
+@client.event
+async def on_message_delete(message):
+  if message.author.id == client.user.id: #Botならばスルー
+    return
+  
+  print("Deleted")
+'''
+  
 # repl.it接続
 keep_alive()
 
