@@ -17,7 +17,7 @@ ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
 
 #Embed群
-embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\no.gbaninfo <ユーザーID>ユーザーのグローバルチャットBANに関する情報を確認できるよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
+embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\no.gbaninfo <ユーザーID>ユーザーのグローバルチャットBANに関する情報を確認できるよ\no.globallist…グローバルチャットに接続中のサーバー一覧を表示するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）")
 embed_verify_help = discord.Embed(title='グローバル認証制度について',description="準備中")
 lettersover = discord.Embed(title="文字数制限超過",description="未認証ユーザーによる文字数制限超過の為、200文字を超える投稿は遮断されました。",color=0xff0000)
 
@@ -32,11 +32,20 @@ client = discord.Client(intents=intents)
 with open('data/gbans.json', encoding='utf-8') as f:
     gbans = json.load(f)
 
+#グローバルチャットリスト読み込み
+with open('data/globals.json', encoding='utf-8') as f:
+    globals = json.load(f)
+
 #グローバルチャットBAN時のテンプレート
 gban_template = {"reason" : "", "enforcer" : "", "datetime" : ""}
+#グローバルチャット参加時のテンプレート
+global_template = {"channel" : "", "enforcer" : "", "datetime" : ""}
 
 #グローバルチャットNGワード
 global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help"]
+
+#Prefix文字列化
+prefix = str(prefix)
 
 
 
@@ -61,7 +70,7 @@ async def on_ready():
 #メッセージ受信時に動作する処理
 @client.event
 async def on_message(message):
-    global gbans, gban_template, global_ng
+    global gbans, gban_template, global_ng, globals, global_template
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
       return
@@ -83,53 +92,82 @@ async def on_message(message):
     if message.content == prefix + 'join':
       #もし既にAoiGlobalがあれば、拒否する（但し、名前で判断しているのでそこが難点）
       webhook_there = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+      #サーバーIDの取得
+      global_tmp = message.guild.id
+      #グローバルチャットリスト読み込み
+      with open('data/globals.json', encoding='utf-8') as f:
+          globals = json.load(f)
 
       if not webhook_there is None:
-        embed = discord.Embed(title=":x: エラー",description="既にグローバルチャットに登録されています。",color=0xff0000)
+        embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
         await message.channel.send(embed=embed)
 
       else:
-        try:
-          await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
-          await message.channel.edit(name=GLOBAL_CH_NAME)
-          embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
+        if str(global_tmp) in globals:
+          embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
           await message.channel.send(embed=embed)
+        else:
+          try:
+            await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
+            await message.channel.edit(name=GLOBAL_CH_NAME)
+            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
+            await message.channel.send(embed=embed)
 
-          #送信元特定
-          global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
-          #余計なパーツ除去
-          global_msg_from = str(global_msg_from)
-          global_msg_from = re.sub(r"\D", "", global_msg_from)
-          global_msg_from = int(global_msg_from)
+            #送信元特定
+            global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+            #余計なパーツ除去
+            global_msg_from = str(global_msg_from)
+            global_msg_from = re.sub(r"\D", "", global_msg_from)
+            global_msg_from = int(global_msg_from)
 
-          channels = client.get_all_channels()
-          global_join_from = message.guild.name
-          #global_join_from_icon = message.guild.icon_url assetになってしまう
-          global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
-          embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
-          #embed.set_thumbnail(url=message.guild.icon_url(format='png'))
+            channels = client.get_all_channels()
+            global_join_from = message.guild.name
+            global_join_total = str(len(globals))
+            global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+            embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
+
+            #ギルドのアイコン取得
+            global_join_from_icon = message.guild.icon_url_as(static_format='png')
+
+            if len(global_join_from_icon) == 0:
+              global_join_from_icon = "https://cdn.discordapp.com/embed/avatars/0.png"
+
+            embed.set_thumbnail(url=global_join_from_icon)
+
+            #JSONでBAN記録書き込み＆データうめ
+            globals[int(global_tmp)] = global_template
+            globals[int(global_tmp)]["channel"] = message.channel.id
+            globals[int(global_tmp)]["enforcer"] = message.author.id
+            datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+            globals[int(global_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
+
+            #JSONに書き込み
+            with open('data/globals.json', mode='w') as f:
+              json.dump(globals, f, indent=4)
+            
+            #合計接続数
+            embed.set_footer(text="現在接続中のサーバーは " + global_join_total + " サーバーです。")
+
+            for channel in global_channels:
+              ch_webhooks = await channel.webhooks()
+              webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+              ch_id = webhook.id
+                
+              if webhook is None:
+                # そのチャンネルに global というWebhookは無かったので無視
+                continue
+
+              #送信元はスキップ
+              if ch_id == global_msg_from:
+                continue
+
+              #Aoi設定
+              await webhook.send(username="Aoi ✅🤖",
+                avatar_url=ICON, embed=embed)
 
 
-          for channel in global_channels:
-            ch_webhooks = await channel.webhooks()
-            webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
-            ch_id = webhook.id
-              
-            if webhook is None:
-              # そのチャンネルに global というWebhookは無かったので無視
-              continue
-
-            #送信元はスキップ
-            if ch_id == global_msg_from:
-              continue
-
-            #Aoi設定
-            await webhook.send(username="Aoi ✅🤖",
-              avatar_url=ICON, embed=embed)
-
-
-        except:
-          await message.channel.send('**エラーが発生しました。**\nチャンネルの全権限がAoiにある事を確認してください。')
+          except:
+            await message.channel.send('**エラーが発生しました。**\nチャンネルの全権限がAoiにある事を確認してください。')
 
     '''
     #解除
@@ -149,7 +187,7 @@ async def on_message(message):
           gban_tmp = gban_tmp[1]
           gban_tmp = int(gban_tmp)
         except:
-          embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
+          embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。\n使い方: " + prefix + "gban <ユーザーID>",color=0xff0000)
           await message.channel.send(embed=embed)
         
         else:
@@ -165,7 +203,7 @@ async def on_message(message):
               gbans = json.load(f)
             
             #既にBANされているか
-            if gban_tmp in list(gbans.keys()):
+            if str(gban_tmp) in gbans:
               embed = discord.Embed(title=":x: エラー",description="そのユーザーは既にグローバルチャットBANされています。",color=0xff0000)
               await message.channel.send(embed=embed)
 
@@ -415,6 +453,27 @@ async def on_message(message):
             #embed.set_thumbnail(url=message.author.avatar_url_as(format="png"))
             await message.channel.send(embed=embed)
 
+    #グローバルチャットサーバーリスト
+    if message.content == prefix + "globallist":
+      with open('data/globals.json', mode='r', encoding='utf-8') as f:
+        globals = json.load(f)
+
+      globals_keys = list(globals.keys())
+      globals_len = len(globals)
+      global_guildlist = ""
+
+      for i in globals_keys:
+        try:
+          global_guildinfo = client.get_guild(int(i))
+        except:
+          global_guildinfo = "Deleted Server"
+          #globals_len = globals_len - 1
+
+        global_guildlist = global_guildlist + "・**" + str(global_guildinfo) + "**\n"
+
+      embed = discord.Embed(title="グローバルチャット接続中サーバーリスト",description=global_guildlist + "接続中サーバー合計:** " + str(globals_len) + "**サーバー")
+      await message.channel.send(embed=embed)
+
 
     #先にDM対策必須
     #AoiGlobalのWebhookを探す   
@@ -449,7 +508,7 @@ async def on_message(message):
             global_sticker = str(message.stickers)
             global_sticker = re.sub(r"\D", "", global_sticker)
             global_sticker = int(global_sticker)
-            #print(message.stickers[0].image_url) assetにして読ませてもあり？
+            #print(message.stickers[0].image_url_as(size=1024)) #assetにして読ませてもあり？
             if global_sticker in stickers:
               global_attachments_on = 3
               global_sticker_id = str(global_sticker)
@@ -653,11 +712,12 @@ async def on_message(message):
             print(ch_webhooks)
             webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
             print(webhook)
-            ch_id = webhook.id
               
             if webhook is None:
               # そのチャンネルに global というWebhookは無かったので無視
               continue
+
+            ch_id = webhook.id
 
             #送信元はスキップ
             if ch_id == global_msg_from:
