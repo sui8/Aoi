@@ -494,138 +494,186 @@ async def on_message(message):
     #AoiGlobalのWebhookを探す   
     webhook_there = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
     webhook_there = str(webhook_there)
- 
+
+    #同時に、チャンネルがGlobalsに登録されているかを確認する準備
+    #グローバルチャットリスト読み込みと登録チャンネル一覧
+    with open('data/globals.json', encoding='utf-8') as f:
+        globals = json.load(f)
+
+    global_channels = []
+    global_unregister = 0
+    for i in globals:
+      global_channels.append(str(globals[str(i)]["channel"]))
+
+
     #グローバルチャット
     #先述のAoiGlobalがあるかないか
-    if webhook_there != 'None':
-      # globalの名前をもつチャンネルに投稿されたので、メッセージを転送する
-      #if message.content == null:
-      #  pass
-
-      #コマンドだけ除外（リスト化しておけば後で使えるかも...）
-      if not message.content in global_ng:
-        #if message.content != prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
-
-        #GBANリスト読み込み
-        with open('data/gbans.json', mode='r', encoding='utf-8') as f:
-          gbans = json.load(f)
-
-        #GBAN者は遮断
-        if str(message.author.id) in gbans:
-          embed = discord.Embed(title=":x: 送信失敗",description="あなたはグローバルBANされているため、メッセージは遮断されました。",color=0xff0000)
-          await message.channel.send(embed=embed)
+    if webhook_there != 'None':#message.channel.id in globals:
+      #変わってたらアプデ
+      if not message.channel.id in global_channels:
+        if str(message.guild.id) in globals:
+          globals[str(message.guild.id)]["channel"] = message.channel.id
+          #JSONに書き込み（更新）
+          with open('data/globals.json', mode='w') as f:
+            json.dump(globals, f, indent=4)
         else:
-          #まず送信待機中
-          await message.add_reaction("a:loading:785106469078958081")
-          #スタンプか
-          if len(message.stickers) != 0:
-            #余計なパーツ除去
-            global_sticker = str(message.stickers)
-            global_sticker = re.sub(r"\D", "", global_sticker)
-            global_sticker = int(global_sticker)
-            #print(message.stickers[0].image_url_as(size=1024)) #assetにして読ませてもあり？
-            if global_sticker in stickers:
-              global_attachments_on = 3
-              global_sticker_id = str(global_sticker)
-              global_sticker = str(global_sticker) + ".gif"
-              global_sticker = str(global_sticker)
-              print(global_sticker)
-            else:
-              global_attachments_on = 4
+          global_unregister = 1
+
+      #チャンネルが変わっていたかどうか
+      if global_unregister == 0:
+        # globalの名前をもつチャンネルに投稿されたので、メッセージを転送する
+        #if message.content == null:
+        #  pass
+
+        #コマンドだけ除外（リスト化しておけば後で使えるかも...）
+        if not message.content in global_ng:
+          #if message.content != prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
+
+          #GBANリスト読み込み
+          with open('data/gbans.json', mode='r', encoding='utf-8') as f:
+            gbans = json.load(f)
+
+          #GBAN者は遮断
+          if str(message.author.id) in gbans:
+            embed = discord.Embed(title=":x: 送信失敗",description="あなたはグローバルBANされているため、メッセージは遮断されました。",color=0xff0000)
+            await message.channel.send(embed=embed)
           else:
-            global_attachments_on = 0
-            
-          #認証確認
-          if message.author.id in verifyed:
-            global_authorname = str(message.author) + ' ✅'
-            Verifymode = 1
-          else:
-            global_authorname = str(message.author)
-            Verifymode = 0
-
-          if message.author.id == OWNER_ID:
-            global_authorname = global_authorname + '👑'
-            Verifymode = 1
-
-          if message.author.id in moderators:
-            global_authorname = global_authorname + '⛏️'
-            Verifymode = 1
-          
-          global_avatar = message.author.avatar_url
-
-          #添付
-          lst = [3, 4]
-          if not global_attachments_on in lst:
-            if len(message.attachments) != 0:
-              #添付ファイルのみか
-              if len(message.content) == 0:
-                #未認証ユーザーはカット
-                if not message.author.id in verifyed:
-                  global_attachments_on = 6
-                else:
-                  global_attachments = message.attachments[0].url
-                  print(global_attachments)
-                  #ここでファイル名抜出
-                  attachment_dump = message.attachments[0].filename
-                  str(attachment_dump)
-                  global_attachments_on = 2
+            #まず送信待機中
+            await message.add_reaction("a:loading:785106469078958081")
+            #スタンプか
+            if len(message.stickers) != 0:
+              #余計なパーツ除去
+              global_sticker = str(message.stickers)
+              global_sticker = re.sub(r"\D", "", global_sticker)
+              global_sticker = int(global_sticker)
+              #print(message.stickers[0].image_url_as(size=1024)) #assetにして読ませてもあり？
+              if global_sticker in stickers:
+                global_attachments_on = 3
+                global_sticker_id = str(global_sticker)
+                global_sticker = str(global_sticker) + ".gif"
+                global_sticker = str(global_sticker)
+                print(global_sticker)
               else:
-                if not message.author.id in verifyed:
-                  global_attachments_on = 5
-                  globalcontent = str(message.content)
-                else:
-                  global_attachments = message.attachments[0].url
-                  #ここでファイル名抜出
-                  attachment_dump = message.attachments[0].filename
-                  str(attachment_dump)
-                  global_attachments_on = 1
-                  globalcontent = str(message.content)
+                global_attachments_on = 4
             else:
               global_attachments_on = 0
-              globalcontent = str(message.content)
+              
+            #認証確認
+            if message.author.id in verifyed:
+              global_authorname = str(message.author) + ' ✅'
+              Verifymode = 1
+            else:
+              global_authorname = str(message.author)
+              Verifymode = 0
 
-          #globalcontent = repr(globalcontent) #rawに変換で文字数確認したい
-          #送信元特定
-          global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
-          #余計なパーツ除去
-          global_msg_from = str(global_msg_from)
-          global_msg_from = re.sub(r"\D", "", global_msg_from)
-          global_msg_from = int(global_msg_from)
+            if message.author.id == OWNER_ID:
+              global_authorname = global_authorname + '👑'
+              Verifymode = 1
 
-          channels = client.get_all_channels()
-          global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
-          
+            if message.author.id in moderators:
+              global_authorname = global_authorname + '⛏️'
+              Verifymode = 1
+            
+            global_avatar = message.author.avatar_url
+
+            #添付
+            lst = [3, 4]
+            if not global_attachments_on in lst:
+              if len(message.attachments) != 0:
+                #添付ファイルのみか
+                if len(message.content) == 0:
+                  #未認証ユーザーはカット
+                  if not message.author.id in verifyed:
+                    global_attachments_on = 6
+                  else:
+                    global_attachments = message.attachments[0].url
+                    print(global_attachments)
+                    #ここでファイル名抜出
+                    attachment_dump = message.attachments[0].filename
+                    str(attachment_dump)
+                    global_attachments_on = 2
+                else:
+                  if not message.author.id in verifyed:
+                    global_attachments_on = 5
+                    globalcontent = str(message.content)
+                  else:
+                    global_attachments = message.attachments[0].url
+                    #ここでファイル名抜出
+                    attachment_dump = message.attachments[0].filename
+                    str(attachment_dump)
+                    global_attachments_on = 1
+                    globalcontent = str(message.content)
+              else:
+                global_attachments_on = 0
+                globalcontent = str(message.content)
+
+            #globalcontent = repr(globalcontent) #rawに変換で文字数確認したい
+            #送信元特定
+            global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+            #余計なパーツ除去
+            global_msg_from = str(global_msg_from)
+            global_msg_from = re.sub(r"\D", "", global_msg_from)
+            global_msg_from = int(global_msg_from)
+
+            channels = client.get_all_channels()
+            global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+            
 
 
-          #認証による文字数確認
-          if global_attachments_on == 0:
-            if len(globalcontent) > 200:
-              if Verifymode != 1:
-                globalcontent = globalcontent[:200]
-                LenOut = 1
-                #URLが含まれているか
-                globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+            #認証による文字数確認
+            if global_attachments_on == 0:
+              if len(globalcontent) > 200:
+                if Verifymode != 1:
+                  globalcontent = globalcontent[:200]
+                  LenOut = 1
+                  #URLが含まれているか
+                  globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
-                #簡易メンション対策
-                if "@everyone" or "@here" in message.content:
-                  if "@everyone" in message.content:
-                    globalcontent = globalcontent.replace("@everyone", "`@everyone`")
-                  if "@here" in message.content:
-                    globalcontent = globalcontent.replace("@here", "`@here`")
+                  #簡易メンション対策
+                  if "@everyone" or "@here" in message.content:
+                    if "@everyone" in message.content:
+                      globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                    if "@here" in message.content:
+                      globalcontent = globalcontent.replace("@here", "`@here`")
 
-                #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
-                if globalcontent[:23] == 'https://tenor.com/view/':
-                  pass
-                elif globalcontent[:19] == 'https://discord.gg/':
-                  for url in globalcontent_urllist:
-                    url = str(url)
-                    url_mask = '||`' + url + '`||'
-                    globalcontent = globalcontent.replace(url, url_mask)
-                elif len(globalcontent_urllist) != 0:
-                  for url in globalcontent_urllist:
-                    url = str(url)
-                    url_mask = '`' + url + '`'
-                    globalcontent = globalcontent.replace(url, url_mask)
+                  #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
+                  if globalcontent[:23] == 'https://tenor.com/view/':
+                    pass
+                  elif globalcontent[:19] == 'https://discord.gg/':
+                    for url in globalcontent_urllist:
+                      url = str(url)
+                      url_mask = '||`' + url + '`||'
+                      globalcontent = globalcontent.replace(url, url_mask)
+                  elif len(globalcontent_urllist) != 0:
+                    for url in globalcontent_urllist:
+                      url = str(url)
+                      url_mask = '`' + url + '`'
+                      globalcontent = globalcontent.replace(url, url_mask)
+                else:
+                  LenOut = 0
+                  #URLが含まれているか
+                  globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+
+                  #簡易メンション対策
+                  if "@everyone" or "@here" in message.content:
+                    if "@everyone" in message.content:
+                      globalcontent = globalcontent.replace("@everyone", "`@everyone`")
+                    if "@here" in message.content:
+                      globalcontent = globalcontent.replace("@here", "`@here`")
+
+                  #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
+                  if globalcontent[:23] == 'https://tenor.com/view/':
+                    pass
+                  elif globalcontent[:19] == 'https://discord.gg/':
+                    for url in globalcontent_urllist:
+                      url = str(url)
+                      url_mask = '||`' + url + '`||'
+                      globalcontent = globalcontent.replace(url, url_mask)
+                  elif len(globalcontent_urllist) != 0:
+                    for url in globalcontent_urllist:
+                      url = str(url)
+                      url_mask = '`' + url + '`'
+                      globalcontent = globalcontent.replace(url, url_mask)
               else:
                 LenOut = 0
                 #URLが含まれているか
@@ -651,8 +699,10 @@ async def on_message(message):
                     url = str(url)
                     url_mask = '`' + url + '`'
                     globalcontent = globalcontent.replace(url, url_mask)
-            else:
-              LenOut = 0
+
+            #添付ファイルあり
+            elif global_attachments_on == 1:
+              LenOut = 2
               #URLが含まれているか
               globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
 
@@ -676,126 +726,100 @@ async def on_message(message):
                   url = str(url)
                   url_mask = '`' + url + '`'
                   globalcontent = globalcontent.replace(url, url_mask)
-
-          #添付ファイルあり
-          elif global_attachments_on == 1:
-            LenOut = 2
-            #URLが含まれているか
-            globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
-
-            #簡易メンション対策
-            if "@everyone" or "@here" in message.content:
-              if "@everyone" in message.content:
-                globalcontent = globalcontent.replace("@everyone", "`@everyone`")
-              if "@here" in message.content:
-                globalcontent = globalcontent.replace("@here", "`@here`")
-
-            #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
-            if globalcontent[:23] == 'https://tenor.com/view/':
-              pass
-            elif globalcontent[:19] == 'https://discord.gg/':
-              for url in globalcontent_urllist:
-                url = str(url)
-                url_mask = '||`' + url + '`||'
-                globalcontent = globalcontent.replace(url, url_mask)
-            elif len(globalcontent_urllist) != 0:
-              for url in globalcontent_urllist:
-                url = str(url)
-                url_mask = '`' + url + '`'
-                globalcontent = globalcontent.replace(url, url_mask)
-          #添付ファイルのみ
-          elif global_attachments_on == 2:
-            LenOut = 3
-          #スタンプ
-          elif global_attachments_on == 3:
-            LenOut = 4
-          #スタンプ（在庫なし）
-          elif global_attachments_on == 4:
-            LenOut = 5
-          #添付ファイルあり（未認証ユーザー）
-          elif global_attachments_on == 5:
-            LenOut = 6
-          #添付ファイルのみ（未認証ユーザー）
-          else:
-            LenOut = 7
-
-          print(global_attachments_on)
-          print(LenOut)
-          #送信スタート
-          for channel in global_channels:
-            ch_webhooks = await channel.webhooks()
-            print(ch_webhooks)
-            webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
-            print(webhook)
-              
-            if webhook is None:
-              # そのチャンネルに global というWebhookは無かったので無視
-              continue
-
-            ch_id = webhook.id
-
-            #送信元はスキップ
-            if ch_id == global_msg_from:
-              continue
-
-            #文字数制限を考慮した送信
-            if LenOut == 1:
-              await webhook.send(content=globalcontent,
-              username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=lettersover)
-
-            elif LenOut == 0:
-              await webhook.send(content=globalcontent,
-              username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"))
-            
-            #ファイルあり
-            elif LenOut == 2:
-              embed = discord.Embed(title="添付ファイル" ,description="ファイル名: [" + attachment_dump + "](" + global_attachments + ")")
-              embed.set_image(url=global_attachments)
-              await webhook.send(content=globalcontent,
-              username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
-
-            #ファイルのみ
-            elif LenOut == 3:
-              embed = discord.Embed(title="添付ファイル" ,description="ファイル名: [" + attachment_dump + "](" + global_attachments + ")")
-              embed.set_image(url=global_attachments)
-              await webhook.send(username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
-
+            #添付ファイルのみ
+            elif global_attachments_on == 2:
+              LenOut = 3
             #スタンプ
-            elif LenOut == 4:
-              #file = discord.File("stickers/" + global_sticker_id + ".gif")
-              embed = discord.Embed(title="スタンプ")
-              embed.set_image(url=STICKER_URL + global_sticker)
-              await webhook.send(username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
-            
+            elif global_attachments_on == 3:
+              LenOut = 4
             #スタンプ（在庫なし）
-            elif LenOut == 5:
-              embed = discord.Embed(title="スタンプ",description="※プレビューできません")
-              await webhook.send(username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
-
+            elif global_attachments_on == 4:
+              LenOut = 5
             #添付ファイルあり（未認証ユーザー）
-            elif LenOut == 6:
-              embed = discord.Embed(title="添付ファイル" ,description="未認証ユーザーによる添付ファイルは遮断されました。",color=0xff0000)
-              await webhook.send(content=globalcontent,
-              username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
-
+            elif global_attachments_on == 5:
+              LenOut = 6
             #添付ファイルのみ（未認証ユーザー）
             else:
-              embed = discord.Embed(title="添付ファイル",description="未認証ユーザーによる添付ファイルは遮断されました。",color=0xff0000)
-              await webhook.send(username=global_authorname,
-              avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+              LenOut = 7
 
-          #送信確認リアクション
-          await message.add_reaction(":finish:798910961255317524")
-          await message.clear_reaction("a:loading:785106469078958081")
-          await asyncio.sleep(5)
-          await message.clear_reaction(":finish:798910961255317524")            
+            #デバッグ用
+            #print(global_attachments_on)
+            #print(LenOut)
+            #送信スタート
+            for channel in global_channels:
+              ch_webhooks = await channel.webhooks()
+              #print(ch_webhooks)
+              webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+              #print(webhook)
+                
+              if webhook is None:
+                # そのチャンネルに global というWebhookは無かったので無視
+                continue
+
+              ch_id = webhook.id
+
+              #送信元はスキップ
+              if ch_id == global_msg_from:
+                continue
+
+              #文字数制限を考慮した送信
+              if LenOut == 1:
+                await webhook.send(content=globalcontent,
+                username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=lettersover)
+
+              elif LenOut == 0:
+                await webhook.send(content=globalcontent,
+                username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"))
+              
+              #ファイルあり
+              elif LenOut == 2:
+                embed = discord.Embed(title="添付ファイル" ,description="ファイル名: [" + attachment_dump + "](" + global_attachments + ")")
+                embed.set_image(url=global_attachments)
+                await webhook.send(content=globalcontent,
+                username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+
+              #ファイルのみ
+              elif LenOut == 3:
+                embed = discord.Embed(title="添付ファイル" ,description="ファイル名: [" + attachment_dump + "](" + global_attachments + ")")
+                embed.set_image(url=global_attachments)
+                await webhook.send(username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+
+              #スタンプ
+              elif LenOut == 4:
+                #file = discord.File("stickers/" + global_sticker_id + ".gif")
+                embed = discord.Embed(title="スタンプ")
+                embed.set_image(url=STICKER_URL + global_sticker)
+                await webhook.send(username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+              
+              #スタンプ（在庫なし）
+              elif LenOut == 5:
+                embed = discord.Embed(title="スタンプ",description="※プレビューできません")
+                await webhook.send(username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+
+              #添付ファイルあり（未認証ユーザー）
+              elif LenOut == 6:
+                embed = discord.Embed(title="添付ファイル" ,description="未認証ユーザーによる添付ファイルは遮断されました。",color=0xff0000)
+                await webhook.send(content=globalcontent,
+                username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+
+              #添付ファイルのみ（未認証ユーザー）
+              else:
+                embed = discord.Embed(title="添付ファイル",description="未認証ユーザーによる添付ファイルは遮断されました。",color=0xff0000)
+                await webhook.send(username=global_authorname,
+                avatar_url=message.author.avatar_url_as(format="png"), embed=embed)
+
+            #送信確認リアクション
+            await message.add_reaction(":finish:798910961255317524")
+            await message.clear_reaction("a:loading:785106469078958081")
+            await asyncio.sleep(5)
+            await message.clear_reaction(":finish:798910961255317524")            
 
 
     #認証申請
