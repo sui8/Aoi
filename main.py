@@ -841,7 +841,8 @@ async def on_message(message):
         
     #Botの招待リンク表示
     if message.content == prefix + 'invite':
-        await message.channel.send('**Aoi招待リンク**:\nhttps://www.herebots.ml/aoi')
+        embed = discord.Embed(title="招待リンク",description="こちらのリンクから、サーバー管理権限を持ったユーザーでAoiの招待が出来ます。（Aoiの権限: 管理者 ＜必須＞）\n\n**https://www.herebots.ml/aoi**",color=0xdda0dd)
+        await message.channel.send(embed=embed)
 
         
 '''
