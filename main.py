@@ -105,84 +105,92 @@ async def on_message(message):
 
     #登録
     if message.content == prefix + 'join':
-      #もし既にAoiGlobalがあれば、拒否する（但し、名前で判断しているのでそこが難点）
-      webhook_there = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
-      #サーバーIDの取得
-      global_tmp = message.guild.id
-      #グローバルチャットリスト読み込み
-      with open('data/globals.json', encoding='utf-8') as f:
-          globals = json.load(f)
 
-      if not webhook_there is None:
-        embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
+      #実行者に管理者権限があるか
+      if not message.author.guild_permissions.administrator == True:
+        embed = discord.Embed(title=":x: エラー",description="あなたには管理者権限がないため、このコマンドを実行する権限がありません。",color=0xff0000)
         await message.channel.send(embed=embed)
-
+  
       else:
-        if str(global_tmp) in globals:
+        #もし既にAoiGlobalがあれば、拒否する（但し、名前で判断しているのでそこが難点）
+        webhook_there = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+        #サーバーIDの取得
+        global_tmp = message.guild.id
+        #グローバルチャットリスト読み込み
+        with open('data/globals.json', encoding='utf-8') as f:
+            globals = json.load(f)
+
+        if not webhook_there is None:
           embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
           await message.channel.send(embed=embed)
+
         else:
-          try:
-            await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
-            await message.channel.edit(name=GLOBAL_CH_NAME)
-            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
+          if str(global_tmp) in globals:
+            embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
             await message.channel.send(embed=embed)
+          else:
+            try:
+              await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
+              await message.channel.edit(name=GLOBAL_CH_NAME)
+              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
+              await message.channel.send(embed=embed)
 
-            #送信元特定
-            global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
-            #余計なパーツ除去
-            global_msg_from = str(global_msg_from)
-            global_msg_from = re.sub(r"\D", "", global_msg_from)
-            global_msg_from = int(global_msg_from)
+              #送信元特定
+              global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+              #余計なパーツ除去
+              global_msg_from = str(global_msg_from)
+              global_msg_from = re.sub(r"\D", "", global_msg_from)
+              global_msg_from = int(global_msg_from)
 
-            channels = client.get_all_channels()
-            global_join_from = message.guild.name
-            global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
-            embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
+              channels = client.get_all_channels()
+              global_join_from = message.guild.name
+              global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+              embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
 
-            #ギルドのアイコン取得
-            global_join_from_icon = message.guild.icon_url_as(static_format='png')
+              #ギルドのアイコン取得
+              global_join_from_icon = message.guild.icon_url_as(static_format='png')
 
-            if len(global_join_from_icon) == 0:
-              global_join_from_icon = "https://cdn.discordapp.com/embed/avatars/0.png"
+              if len(global_join_from_icon) == 0:
+                global_join_from_icon = "https://cdn.discordapp.com/embed/avatars/0.png"
 
-            embed.set_thumbnail(url=global_join_from_icon)
+              embed.set_thumbnail(url=global_join_from_icon)
 
-            #JSONでBAN記録書き込み＆データうめ
-            globals[int(global_tmp)] = global_template
-            globals[int(global_tmp)]["channel"] = message.channel.id
-            globals[int(global_tmp)]["enforcer"] = message.author.id
-            datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
-            globals[int(global_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
+              #JSONでBAN記録書き込み＆データうめ
+              globals[int(global_tmp)] = global_template
+              globals[int(global_tmp)]["channel"] = message.channel.id
+              globals[int(global_tmp)]["enforcer"] = message.author.id
+              datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+              globals[int(global_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
 
-            #JSONに書き込み
-            with open('data/globals.json', mode='w') as f:
-              json.dump(globals, f, indent=4)
-            
-            #合計接続数
-            global_join_total = str(len(globals))
-            embed.set_footer(text="現在接続中のサーバーは " + global_join_total + " サーバーです。")
+              #JSONに書き込み
+              with open('data/globals.json', mode='w') as f:
+                json.dump(globals, f, indent=4)
+              
+              #合計接続数
+              global_join_total = str(len(globals))
+              embed.set_footer(text="現在接続中のサーバーは " + global_join_total + " サーバーです。")
 
-            for channel in global_channels:
-              ch_webhooks = await channel.webhooks()
-              webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
-              ch_id = webhook.id
-                
-              if webhook is None:
-                # そのチャンネルに global というWebhookは無かったので無視
-                continue
+              for channel in global_channels:
+                ch_webhooks = await channel.webhooks()
+                webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+                ch_id = webhook.id
+                  
+                if webhook is None:
+                  # そのチャンネルに global というWebhookは無かったので無視
+                  continue
 
-              #送信元はスキップ
-              if ch_id == global_msg_from:
-                continue
+                #送信元はスキップ
+                if ch_id == global_msg_from:
+                  continue
 
-              #Aoi設定
-              await webhook.send(username="Aoi ✅🤖",
-                avatar_url=ICON, embed=embed)
+                #Aoi設定
+                await webhook.send(username="Aoi ✅🤖",
+                  avatar_url=ICON, embed=embed)
 
 
-          except:
-            await message.channel.send('**エラーが発生しました。**\nチャンネルの全権限がAoiにある事を確認してください。')
+            except:
+              embed = discord.Embed(title=":x: エラー",description="チャンネルの全権限がAoiにある事を確認して下さい。",color=0xff0000)
+              await message.channel.send(embed=embed)
 
     '''
     #解除
