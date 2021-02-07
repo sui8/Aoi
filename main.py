@@ -137,7 +137,6 @@ async def on_message(message):
 
             channels = client.get_all_channels()
             global_join_from = message.guild.name
-            global_join_total = str(len(globals))
             global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
             embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
 
@@ -161,6 +160,7 @@ async def on_message(message):
               json.dump(globals, f, indent=4)
             
             #合計接続数
+            global_join_total = str(len(globals))
             embed.set_footer(text="現在接続中のサーバーは " + global_join_total + " サーバーです。")
 
             for channel in global_channels:
