@@ -9,17 +9,18 @@ import asyncio #タイマー
 import datetime #日時取得
 import json #jsonファイル読み込み
 import pya3rt #Talk API
+import threading
 
 #変数群
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
+default_prefix = 'o.' #デフォルトPrefix
 Verifymode = 0
 ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
 TALKAPI_KEY = os.getenv("TALKAPI_KEY") #Talk API Key
 
 #Embed群
-embed_help = discord.Embed(title="Aoi コマンドリスト",description="o.invite…このBotの招待リンクを表示するよ\no.join…このコマンドを実行したチャンネルをグローバルチャットにするよ\no.verify…グローバルチャットアカウント認証申請をするよ\no.gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\no.gbanlist…グローバルチャットBANリストを表示するよ\no.gbaninfo <ユーザーID>ユーザーのグローバルチャットBANに関する情報を確認できるよ\no.globallist…グローバルチャットに接続中のサーバー一覧を表示するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）\n'aoi-talk'というチャンネルを作って話しかけてみよう！")
 embed_verify_help = discord.Embed(title='グローバル認証制度について',description="準備中")
 lettersover = discord.Embed(title="文字数制限超過",description="未認証ユーザーによる文字数制限超過の為、200文字を超える投稿は遮断されました。",color=0xff0000)
 
@@ -38,10 +39,16 @@ with open('data/gbans.json', encoding='utf-8') as f:
 with open('data/globals.json', encoding='utf-8') as f:
     globals = json.load(f)
 
+#Prefixリスト読み込み
+with open('data/guilds.json', encoding='utf-8') as f:
+    guilds_info = json.load(f)
+
 #グローバルチャットBAN時のテンプレート
 gban_template = {"reason" : "", "enforcer" : "", "datetime" : ""}
 #グローバルチャット参加時のテンプレート
 global_template = {"channel" : "", "enforcer" : "", "datetime" : ""}
+#Prefix変更時のテンプレート
+guilds_template = {"prefix" : "", "owner" : "", "datetime" : ""}
 
 #グローバルチャットNGワード
 global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help"]
@@ -80,7 +87,7 @@ def talkapi(message):
 #メッセージ受信時に動作する処理
 @client.event
 async def on_message(message):
-    global gbans, gban_template, global_ng, globals, global_template
+    global gbans, gban_template, global_ng, globals, global_template, prefix, guilds_template, default_prefix
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
       return
@@ -88,6 +95,19 @@ async def on_message(message):
     #DMの場合無視する
     if isinstance(message.channel, discord.channel.DMChannel):
       return
+    
+    #カスタムPrefixがあれば
+    #JSON開く
+    with open('data/guilds.json', mode='r', encoding='utf-8') as f:
+      guilds_info = json.load(f)
+  
+    if str(message.guild.id) in guilds_info:
+      prefix = str(guilds_info[str(message.guild.id)]['prefix'])
+
+    #チャンネルを削除するとリストに残ったままでバグるやつを直す為（joinに組み込み・try）
+    if message.content == "pong":
+      fas = await client.fetch_channel(message.channel.id)
+      print(fas)
 
     #Talk API
     if message.channel.name == "aoi-talk":
@@ -96,8 +116,10 @@ async def on_message(message):
 
     GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
     GLOBAL_WEBHOOK_NAME = "AoiGlobal" #グローバルチャットのWebhook名
+
     if message.content == prefix + 'help':
-        await message.channel.send(embed=embed_help)
+      embed_help = discord.Embed(title="Aoi コマンドリスト",description=prefix + "invite…このBotの招待リンクを表示するよ\n" + prefix + "join…このコマンドを実行したチャンネルをグローバルチャットにするよ\n" + prefix + "verify…グローバルチャットアカウント認証申請をするよ\n" + prefix + "gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\n" + prefix + "gbanlist…グローバルチャットBANリストを表示するよ\n" + prefix + "gbaninfo <ユーザーID>…ユーザーのグローバルチャットBANに関する情報を確認できるよ\n" + prefix + "globallist…グローバルチャットに接続中のサーバー一覧を表示するよ\n" + prefix + "setprefix <新プレフィックス or 'reset'>…サーバーでのプレフィックスを変更するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）\n'aoi-talk'というチャンネルを作って話しかけてみよう！")
+      await message.channel.send(embed=embed_help)
 
     #認証ヘルプ
     if message.content == prefix + 'verify-help':
@@ -497,6 +519,55 @@ async def on_message(message):
       embed = discord.Embed(title="グローバルチャット接続中サーバーリスト",description=global_guildlist + "接続中サーバー合計:** " + str(globals_len) + "**サーバー")
       await message.channel.send(embed=embed)
 
+    #Prefix変更
+    if message.content.split(' ')[0] == prefix + "setprefix":
+      #実行者に管理者権限があるか
+      if not message.author.guild_permissions.administrator == True:
+        embed = discord.Embed(title=":x: エラー",description="あなたには管理者権限がないため、このコマンドを実行する権限がありません。",color=0xff0000)
+        await message.channel.send(embed=embed)
+
+      else:
+        setprefix_tmp = str(message.content)
+        setprefix_tmp = setprefix_tmp.split(' ')
+
+        #引数が正しく設定されているか
+        try:
+          setprefix_tmp = setprefix_tmp[1]
+          setprefix_tmp = str(setprefix_tmp)
+        except:
+          embed = discord.Embed(title=":x: エラー",description="コマンドが不正です。引数が正しく設定されているか確認して下さい。",color=0xff0000)
+          await message.channel.send(embed=embed)
+        
+        else:          
+          #JSON開く
+          with open('data/guilds.json', mode='r', encoding='utf-8') as f:
+            guilds_info = json.load(f)
+
+          #変更歴あり
+          if str(message.guild.id) in guilds_info:
+            old_prefix = guilds_info[str(message.guild.id)]["prefix"]
+
+            #reset引数ならば元のPrefixに戻す
+            if setprefix_tmp == "reset":
+              setprefix_tmp = default_prefix
+
+            guilds_info[str(message.guild.id)]["prefix"] = setprefix_tmp
+
+          #なし
+          else:
+            old_prefix = prefix
+            guilds_info[str(message.guild.id)] = guilds_template
+            guilds_info[str(message.guild.id)]["prefix"] = setprefix_tmp
+
+          #JSONに書き込み
+          with open('data/guilds.json', mode='w') as f:
+            json.dump(guilds_info, f, indent=4)
+
+          embed = discord.Embed(title="プレフィックス変更",description="このサーバーでのプレフィックスを`" + str(old_prefix) + "`から`" + setprefix_tmp + "`に変更しました。",color=0x87cefa)
+          await message.channel.send(embed=embed)
+
+            
+            
 
     #先にDM対策必須
     #AoiGlobalのWebhookを探す   
