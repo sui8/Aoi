@@ -1,0 +1,7 @@
+{
+    "help": {
+        "category": "🤖Botコマンド",
+        "usage" : "help",
+        "info": "コマンドリストを表示します"
+    } 
+}

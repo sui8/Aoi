@@ -50,8 +50,8 @@ global_template = {"channel" : "", "enforcer" : "", "datetime" : ""}
 #Prefix変更時のテンプレート
 guilds_template = {"prefix" : "", "owner" : "", "datetime" : ""}
 
-#グローバルチャットNGワード
-global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help"]
+#コマンド一覧
+help_commands = ["help"]
 
 #Prefix文字列化
 prefix = str(prefix)
@@ -87,7 +87,7 @@ def talkapi(message):
 #メッセージ受信時に動作する処理
 @client.event
 async def on_message(message):
-    global gbans, gban_template, global_ng, globals, global_template, prefix, guilds_template, default_prefix
+    global help_commands, gbans, gban_template, globals, global_template, prefix, guilds_template, default_prefix, help_category, help_infos
     #メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
       return
@@ -95,6 +95,11 @@ async def on_message(message):
     #DMの場合無視する
     if isinstance(message.channel, discord.channel.DMChannel):
       return
+
+    #Talk API
+    if message.channel.name == "aoi-talk":
+      talk_message_reply = talkapi(message.content)
+      await message.channel.send(talk_message_reply)
     
     #カスタムPrefixがあれば
     #JSON開く
@@ -109,17 +114,37 @@ async def on_message(message):
       fas = await client.fetch_channel(message.channel.id)
       print(fas)
 
-    #Talk API
-    if message.channel.name == "aoi-talk":
-      talk_message_reply = talkapi(message.content)
-      await message.channel.send(talk_message_reply)
 
     GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
     GLOBAL_WEBHOOK_NAME = "AoiGlobal" #グローバルチャットのWebhook名
 
-    if message.content == prefix + 'help':
-      embed_help = discord.Embed(title="Aoi コマンドリスト",description=prefix + "invite…このBotの招待リンクを表示するよ\n" + prefix + "join…このコマンドを実行したチャンネルをグローバルチャットにするよ\n" + prefix + "verify…グローバルチャットアカウント認証申請をするよ\n" + prefix + "gban <ユーザーID>…グローバルチャットBANを実行するよ（Aoi モデレーターのみ）\n" + prefix + "gbanlist…グローバルチャットBANリストを表示するよ\n" + prefix + "gbaninfo <ユーザーID>…ユーザーのグローバルチャットBANに関する情報を確認できるよ\n" + prefix + "globallist…グローバルチャットに接続中のサーバー一覧を表示するよ\n" + prefix + "setprefix <新プレフィックス or 'reset'>…サーバーでのプレフィックスを変更するよ\n\n（グローバルチャットを解除する場合は、そのチャンネルを削除してください）\n'aoi-talk'というチャンネルを作って話しかけてみよう！")
-      await message.channel.send(embed=embed_help)
+    #ヘルプメニュー
+    if message.content.split(' ')[0] == prefix + "help":
+      help_tmp = str(message.content)
+      help_tmp = help_tmp.split(' ')
+      with open('data/commands.json', encoding='utf-8') as f:
+        commands = json.load(f)
+
+      #引数があるか
+      if len(help_tmp) == 2:
+        if str(help_tmp[1]) == "function":
+          embed = discord.Embed(title="⚒コマンド以外の機能",description="（仮）'aoi-talk'というチャンネルを作成し、メッセージを送信すると会話が出来ます")
+          await message.channel.send(embed=embed)
+        if str(help_tmp[1]) in commands:
+          category = commands[str(help_tmp[1])]["category"]
+          help_usage = commands[str(help_tmp[1])]["usage"]
+          help_info = commands[str(help_tmp[1])]["info"]
+          embed = discord.Embed(title=category + ": **" + str(help_tmp[1]) + "**",description="")
+          embed.add_field(name="使い方", value="\n```" + prefix + help_usage + "```",inline=False)
+          embed.add_field(name="説明", value="```" + help_info + "```",inline=False)
+          embed.set_footer(text="<> : 必要引数 | [] : オプション引数")
+          await message.channel.send(embed=embed)
+      
+      #なければ通常
+      else:
+        embed = discord.Embed(title="📖コマンドリスト",description="Prefix: `" + prefix + "`\n```Aoi コマンドリストです。Prefix + <ここに記載されているコマンド> の形で送信することで、コマンドを実行することが出来ます。```\n**🤖Botコマンド**\n`help`, `invite`, `setprefix`\n\n**🌐グローバルチャットコマンド**\n`join`, `verify`, `globallist`, `gban`, `ungban`, `gbanlist`, `gbaninfo`\n\n**⚒コマンド以外の機能**\n`" + prefix + "help function`")
+        embed.set_footer(text="❓コマンドの説明: " + prefix + "help <コマンド名>")
+        await message.channel.send(embed=embed)
 
     #認証ヘルプ
     if message.content == prefix + 'verify-help':
@@ -623,6 +648,7 @@ async def on_message(message):
         #  pass
 
         #コマンドだけ除外（リスト化しておけば後で使えるかも...）
+        global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help", prefix + "globallist", prefix + "gbaninfo", prefix + "setprefix"]
         if not message.content in global_ng:
           #if message.content != prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
 
