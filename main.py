@@ -271,6 +271,9 @@ async def on_message(message):
               with open('data/gbans.json', mode='w') as f:
                 json.dump(gbans, f, indent=4)
 
+              if len(gban_reason) == 0:
+                gban_reason = "理由が入力されていません"
+
               #if message.author.id == OWNER_ID:
               #  
               embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。\n\n理由: " + gban_reason, color=0xff0000, timestamp=datetime.datetime.now())
@@ -326,6 +329,9 @@ async def on_message(message):
               #JSONに書き込み
               with open('data/gbans.json', mode='w') as f:
                 json.dump(gbans, f, indent=4)
+
+              if len(gban_reason) == 0:
+                gban_reason = "理由が入力されていません"
 
               embed = discord.Embed(title="グローバルチャットBAN",description="**" + str(gban_name) + "** [ID:" + str(gban_tmp) + "] " + "がグローバルチャットBANされました。\n\n理由: " + gban_reason, color=0xff0000, timestamp=datetime.datetime.now())
               embed.set_footer(text="実行者: " + str(message.author), icon_url=message.author.avatar_url_as(format="png"))
