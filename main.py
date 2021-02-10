@@ -51,7 +51,7 @@ global_template = {"channel" : "", "enforcer" : "", "datetime" : ""}
 guilds_template = {"prefix" : "", "owner" : "", "datetime" : ""}
 
 #コマンド一覧
-help_commands = ["help"]
+help_commands = ["help", "invite", "prefix", "setprefix", "join", "verify", "globallist", "gban", "ungban", "gbanlist", "gbaninfo"]
 
 #Prefix文字列化
 prefix = str(prefix)
@@ -142,13 +142,19 @@ async def on_message(message):
       
       #なければ通常
       else:
-        embed = discord.Embed(title="📖コマンドリスト",description="Prefix: `" + prefix + "`\n```Aoi コマンドリストです。Prefix + <ここに記載されているコマンド> の形で送信することで、コマンドを実行することが出来ます。```\n**🤖Botコマンド**\n`help`, `invite`, `setprefix`\n\n**🌐グローバルチャットコマンド**\n`join`, `verify`, `globallist`, `gban`, `ungban`, `gbanlist`, `gbaninfo`\n\n**⚒コマンド以外の機能**\n`" + prefix + "help function`")
+        embed = discord.Embed(title="📖コマンドリスト",description="Prefix: `" + prefix + "`\n```Aoi コマンドリストです。Prefix + <ここに記載されているコマンド> の形で送信することで、コマンドを実行することが出来ます。```\n**🤖Botコマンド**\n`help`, `invite`, `prefix`, `setprefix`\n\n**🌐グローバルチャットコマンド**\n`join`, `verify`, `globallist`, `gban`, `ungban`, `gbanlist`, `gbaninfo`\n\n**⚒コマンド以外の機能**\n`" + prefix + "help function`")
         embed.set_footer(text="❓コマンドの説明: " + prefix + "help <コマンド名>")
         await message.channel.send(embed=embed)
 
     #認証ヘルプ
     if message.content == prefix + 'verify-help':
       await message.channel.send(embed=embed_verify_help)
+
+    #Prefix
+    if message.content == prefix + 'prefix':
+      embed = discord.Embed(title="Prefix", description="このサーバーでのPrefixは`" + prefix + "`です。")
+      embed.set_footer(text="変更するには、 " + prefix + "setprefix <新しいPrefix or reset> を実行して下さい。")
+      await message.channel.send(embed=embed)
 
     #登録
     if message.content == prefix + 'join':
@@ -648,7 +654,7 @@ async def on_message(message):
         #  pass
 
         #コマンドだけ除外（リスト化しておけば後で使えるかも...）
-        global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help", prefix + "globallist", prefix + "gbaninfo", prefix + "setprefix"]
+        global_ng = [prefix + "invite", prefix + "join", prefix + "verify", prefix + "gbanlist", prefix + "help", prefix + "globallist", prefix + "gbaninfo", prefix + "prefix", prefix + "setprefix"]
         if not message.content in global_ng:
           #if message.content != prefix + "join" or prefix + "help" or prefix + "gban" or prefix + "verify-help":
 
@@ -751,6 +757,8 @@ async def on_message(message):
                   LenOut = 1
                   #URLが含まれているか
                   globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+                  #メンションが含まれているか
+                  globalcontent_mentionlist = re.findall("<@!\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d>", globalcontent)
 
                   #簡易メンション対策
                   if "@everyone" or "@here" in message.content:
@@ -759,7 +767,7 @@ async def on_message(message):
                     if "@here" in message.content:
                       globalcontent = globalcontent.replace("@here", "`@here`")
 
-                  #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
+                  #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）また、メンションもマスクする
                   if globalcontent[:23] == 'https://tenor.com/view/':
                     pass
                   elif globalcontent[:19] == 'https://discord.gg/':
@@ -772,10 +780,17 @@ async def on_message(message):
                       url = str(url)
                       url_mask = '`' + url + '`'
                       globalcontent = globalcontent.replace(url, url_mask)
+                  if len(globalcontent_mentionlist) != 0:
+                    for mention in globalcontent_mentionlist:
+                      mention = str(mention)
+                      mention_mask = '`' + mention + '`'
+                      globalcontent = globalcontent.replace(mention, mention_mask)
                 else:
                   LenOut = 0
                   #URLが含まれているか
                   globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+                  #メンションが含まれているか
+                  globalcontent_mentionlist = re.findall("<@!\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d>", globalcontent)
 
                   #簡易メンション対策
                   if "@everyone" or "@here" in message.content:
@@ -784,7 +799,7 @@ async def on_message(message):
                     if "@here" in message.content:
                       globalcontent = globalcontent.replace("@here", "`@here`")
 
-                  #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
+                  #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）また、メンションもマスクする
                   if globalcontent[:23] == 'https://tenor.com/view/':
                     pass
                   elif globalcontent[:19] == 'https://discord.gg/':
@@ -797,10 +812,17 @@ async def on_message(message):
                       url = str(url)
                       url_mask = '`' + url + '`'
                       globalcontent = globalcontent.replace(url, url_mask)
+                  if len(globalcontent_mentionlist) != 0:
+                    for mention in globalcontent_mentionlist:
+                      mention = str(mention)
+                      mention_mask = '`' + mention + '`'
+                      globalcontent = globalcontent.replace(mention, mention_mask)
               else:
                 LenOut = 0
                 #URLが含まれているか
                 globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+                #メンションが含まれているか
+                globalcontent_mentionlist = re.findall("<@!\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d>", globalcontent)
 
                 #簡易メンション対策
                 if "@everyone" or "@here" in message.content:
@@ -809,7 +831,7 @@ async def on_message(message):
                   if "@here" in message.content:
                     globalcontent = globalcontent.replace("@here", "`@here`")
 
-                #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
+                #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）また、メンションもマスクする
                 if globalcontent[:23] == 'https://tenor.com/view/':
                   pass
                 elif globalcontent[:19] == 'https://discord.gg/':
@@ -822,12 +844,19 @@ async def on_message(message):
                     url = str(url)
                     url_mask = '`' + url + '`'
                     globalcontent = globalcontent.replace(url, url_mask)
+                if len(globalcontent_mentionlist) != 0:
+                  for mention in globalcontent_mentionlist:
+                    mention = str(mention)
+                    mention_mask = '`' + mention + '`'
+                    globalcontent = globalcontent.replace(mention, mention_mask)
 
             #添付ファイルあり
             elif global_attachments_on == 1:
               LenOut = 2
               #URLが含まれているか
               globalcontent_urllist = re.findall("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", globalcontent)
+              #メンションが含まれているか
+              globalcontent_mentionlist = re.findall("<@!\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d>", globalcontent)
 
               #簡易メンション対策
               if "@everyone" or "@here" in message.content:
@@ -836,7 +865,7 @@ async def on_message(message):
                 if "@here" in message.content:
                   globalcontent = globalcontent.replace("@here", "`@here`")
 
-              #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）
+              #URLが含まれていればマスクする（招待リンクはブロック、Tenorのみ許可、但しEmbedにする必要あり）また、メンションもマスクする
               if globalcontent[:23] == 'https://tenor.com/view/':
                 pass
               elif globalcontent[:19] == 'https://discord.gg/':
@@ -849,6 +878,11 @@ async def on_message(message):
                   url = str(url)
                   url_mask = '`' + url + '`'
                   globalcontent = globalcontent.replace(url, url_mask)
+              if len(globalcontent_mentionlist) != 0:
+                for mention in globalcontent_mentionlist:
+                  mention = str(mention)
+                  mention_mask = '`' + mention + '`'
+                  globalcontent = globalcontent.replace(mention, mention_mask)
             #添付ファイルのみ
             elif global_attachments_on == 2:
               LenOut = 3
