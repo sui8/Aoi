@@ -46,7 +46,7 @@ with open('data/guilds.json', encoding='utf-8') as f:
 #グローバルチャットBAN時のテンプレート
 gban_template = {"reason" : "", "enforcer" : "", "datetime" : ""}
 #グローバルチャット参加時のテンプレート
-global_template = {"channel" : "", "enforcer" : "", "datetime" : ""}
+global_template = {"channel" : "", "webhook" : "", "enforcer" : "", "datetime" : ""}
 #Prefix変更時のテンプレート
 guilds_template = {"prefix" : "", "owner" : "", "datetime" : ""}
 
@@ -112,6 +112,8 @@ async def on_message(message):
     #チャンネルを削除するとリストに残ったままでバグるやつを直す為（joinに組み込み・try）
     if message.content == "pong":
       fas = await client.fetch_channel(message.channel.id)
+      fs2 = await client.fetch_webhook(807460584299823124)
+      print(fs2)
       print(fas)
 
 
@@ -173,77 +175,96 @@ async def on_message(message):
         with open('data/globals.json', encoding='utf-8') as f:
             globals = json.load(f)
 
-        if not webhook_there is None:
-          embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
-          await message.channel.send(embed=embed)
-
-        else:
-          if str(global_tmp) in globals:
+        #グローバルチャットチャンネル切り替え
+        if str(message.guild.id) in globals:
+          if str(message.channel.id) == globals[str(message.guild.id)]["channel"]:
             embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
             await message.channel.send(embed=embed)
           else:
             try:
-              await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
-              await message.channel.edit(name=GLOBAL_CH_NAME)
-              embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
-              await message.channel.send(embed=embed)
-
-              #送信元特定
-              global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
-              #余計なパーツ除去
-              global_msg_from = str(global_msg_from)
-              global_msg_from = re.sub(r"\D", "", global_msg_from)
-              global_msg_from = int(global_msg_from)
-
-              channels = client.get_all_channels()
-              global_join_from = message.guild.name
-              global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
-              embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
-
-              #ギルドのアイコン取得
-              global_join_from_icon = message.guild.icon_url_as(static_format='png')
-
-              if len(global_join_from_icon) == 0:
-                global_join_from_icon = "https://cdn.discordapp.com/embed/avatars/0.png"
-
-              embed.set_thumbnail(url=global_join_from_icon)
-
-              #JSONでBAN記録書き込み＆データうめ
-              globals[int(global_tmp)] = global_template
-              globals[int(global_tmp)]["channel"] = message.channel.id
-              globals[int(global_tmp)]["enforcer"] = message.author.id
-              datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
-              globals[int(global_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
-
-              #JSONに書き込み
-              with open('data/globals.json', mode='w') as f:
-                json.dump(globals, f, indent=4)
-              
-              #合計接続数
-              global_join_total = str(len(globals))
-              embed.set_footer(text="現在接続中のサーバーは " + global_join_total + " サーバーです。")
-
-              for channel in global_channels:
-                ch_webhooks = await channel.webhooks()
-                webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
-                ch_id = webhook.id
-                  
-                if webhook is None:
-                  # そのチャンネルに global というWebhookは無かったので無視
-                  continue
-
-                #送信元はスキップ
-                if ch_id == global_msg_from:
-                  continue
-
-                #Aoi設定
-                await webhook.send(username="Aoi ✅🤖",
-                  avatar_url=ICON, embed=embed)
-
-
+              old_globalchannel = await client.fetch_channel(int(globals[str(message.guild.id)]["channel"]))
             except:
-              embed = discord.Embed(title=":x: エラー",description="チャンネルの全権限がAoiにある事を確認して下さい。",color=0xff0000)
-              await message.channel.send(embed=embed)
+              old_globalchannel = "Deleted Channel"
+
+            globals[str(message.guild.id)]["channel"] = message.channel.id
+            await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
+            get_webhook = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+            new_webhook = await client.fetch_webhook(re.sub("\\D", "", str(get_webhook)))
+            globals[str(message.guild.id)]["webhook"] = int(re.sub("\\D", "", str(new_webhook)))
+            #JSONに書き込み（更新）
+            with open('data/globals.json', mode='w') as f:
+              json.dump(globals, f, indent=4)
+
+            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットチャンネルを`" + str(old_globalchannel) + "`から`" + str(message.channel.name) + "`へ切り替えました。",color=0x00ff00)
+            await message.channel.send(embed=embed)
+          
+
+        else:
+          try:
+            await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
+            get_webhook = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+            new_webhook = await client.fetch_webhook(int(get_webhook))
+            await message.channel.edit(name=GLOBAL_CH_NAME)
+            embed = discord.Embed(title=":white_check_mark: 成功",description="グローバルチャットへの登録に成功しました。チャンネル名は変更しないで下さい。（グローバルチャットを解除する場合は、当チャンネルを削除してください）",color=0x00ff00)
+            await message.channel.send(embed=embed)
+
+            #送信元特定
+            global_msg_from = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+            #余計なパーツ除去
+            global_msg_from = str(global_msg_from)
+            global_msg_from = re.sub(r"\D", "", global_msg_from)
+            global_msg_from = int(global_msg_from)
+
+            channels = client.get_all_channels()
+            global_join_from = message.guild.name
+            global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+            embed = discord.Embed(title=':white_check_mark: 参加',description="**" + global_join_from + "**がグローバルチャットに参加しました。",color=0x00ffff, timestamp=datetime.datetime.now())
+
+            #ギルドのアイコン取得
+            global_join_from_icon = message.guild.icon_url_as(static_format='png')
+
+            if len(global_join_from_icon) == 0:
+              global_join_from_icon = "https://cdn.discordapp.com/embed/avatars/0.png"
+
+            embed.set_thumbnail(url=global_join_from_icon)
+
+            #JSONでBAN記録書き込み＆データうめ
+            globals[int(global_tmp)] = global_template
+            globals[int(global_tmp)]["channel"] = message.channel.id
+            globals[int(global_tmp)]["webhook"] = int(re.sub("\\D", "", new_webhook))
+            globals[int(global_tmp)]["enforcer"] = message.author.id
+            datetime_now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+            globals[int(global_tmp)]["datetime"] = datetime_now_jst.strftime('%Y/%m/%d %H:%M:%S') + ' (JST)'
+
+            #JSONに書き込み
+            with open('data/globals.json', mode='w') as f:
+              json.dump(globals, f, indent=4)
+            
+            #合計接続数
+            global_join_total = str(len(globals))
+            embed.set_footer(text="現在接続中のサーバーは " + global_join_total + " サーバーです。")
+
+            for channel in global_channels:
+              ch_webhooks = await channel.webhooks()
+              webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+              ch_id = webhook.id
+                
+              if webhook is None:
+                # そのチャンネルに global というWebhookは無かったので無視
+                continue
+
+              #送信元はスキップ
+              if ch_id == global_msg_from:
+                continue
+
+              #Aoi設定
+              await webhook.send(username="Aoi ✅🤖",
+                avatar_url=ICON, embed=embed)
+
+
+          except:
+            embed = discord.Embed(title=":x: エラー",description="チャンネルの全権限がAoiにある事を確認して下さい。",color=0xff0000)
+            await message.channel.send(embed=embed)
 
     '''
     #解除
@@ -629,26 +650,28 @@ async def on_message(message):
         globals = json.load(f)
 
     global_channels = []
-    global_unregister = 0
+    globalwebhook = []
+
     for i in globals:
+      globalwebhook.append(globals[str(i)]["webhook"])
       global_channels.append(str(globals[str(i)]["channel"]))
 
 
     #グローバルチャット
     #先述のAoiGlobalがあるかないか
-    if webhook_there != 'None':#message.channel.id in globals:
-      #変わってたらアプデ
-      if not message.channel.id in global_channels:
-        if str(message.guild.id) in globals:
-          globals[str(message.guild.id)]["channel"] = message.channel.id
-          #JSONに書き込み（更新）
+    if str(message.channel.id) in global_channels:
+      if str(message.channel.id) in str(globals[str(message.guild.id)]["channel"]):
+        try:
+          await client.fetch_webhook(int(globals[str(message.guild.id)]["webhook"]))
+        except:
+          await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
+          get_webhook = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+          new_webhook = await client.fetch_webhook(re.sub("\\D", "", str(get_webhook)))
+          globals[str(message.guild.id)]["webhook"] = re.sub("\\D", "", str(new_webhook))
+
           with open('data/globals.json', mode='w') as f:
             json.dump(globals, f, indent=4)
-        else:
-          global_unregister = 1
 
-      #チャンネルが変わっていたかどうか
-      if global_unregister == 0:
         # globalの名前をもつチャンネルに投稿されたので、メッセージを転送する
         #if message.content == null:
         #  pass
@@ -678,7 +701,7 @@ async def on_message(message):
               #print(message.stickers[0].image_url_as(size=1024)) #assetにして読ませてもあり？
               if global_sticker in stickers:
                 global_attachments_on = 3
-                global_sticker_id = str(global_sticker)
+                #global_sticker_id = str(global_sticker)
                 global_sticker = str(global_sticker) + ".gif"
                 global_sticker = str(global_sticker)
                 print(global_sticker)
@@ -703,7 +726,7 @@ async def on_message(message):
               global_authorname = global_authorname + '⛏️'
               Verifymode = 1
             
-            global_avatar = message.author.avatar_url
+            #global_avatar = message.author.avatar_url
 
             #添付
             lst = [3, 4]
@@ -744,9 +767,26 @@ async def on_message(message):
             global_msg_from = re.sub(r"\D", "", global_msg_from)
             global_msg_from = int(global_msg_from)
 
-            channels = client.get_all_channels()
-            global_channels = [ch for ch in channels if ch.name == GLOBAL_CH_NAME]
+            #allchannels = client.get_all_channels()
+            allchannels = []
+            #global_channels = []
+            #global_channels_list = [int(i) for i in global_channels_list]
             
+            for guild in client.guilds:
+              for channel in guild.channels:
+                  allchannels.append(channel)
+
+            #global_channels = [i for i in allchannels if i.id in global_channels_list]
+            global_channels_list = []
+            global_channels = [int(s) for s in global_channels]
+
+            #ChannelIDをJSON順にする
+            for counter in range(len(global_channels)):
+              for i in range(len(allchannels)):
+                if allchannels[i].id == global_channels[counter]:
+                  global_channels_list.append(allchannels[i])
+                  counter = + 1
+                  break
 
 
             #認証による文字数確認
@@ -903,10 +943,11 @@ async def on_message(message):
             #print(global_attachments_on)
             #print(LenOut)
             #送信スタート
-            for channel in global_channels:
+            for (webhook_id, channel) in zip(globalwebhook, global_channels_list):
+              #ch = client.get_channel(channel)
               ch_webhooks = await channel.webhooks()
               #print(ch_webhooks)
-              webhook = discord.utils.get(ch_webhooks, name=GLOBAL_WEBHOOK_NAME)
+              webhook = discord.utils.get(ch_webhooks, id=webhook_id)
               #print(webhook)
                 
               if webhook is None:
