@@ -15,6 +15,7 @@ import threading
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 default_prefix = 'o.' #デフォルトPrefix
+Bot_Version = '3.1.0'
 Verifymode = 0
 ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
@@ -64,13 +65,20 @@ async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
     print('[Aoi] ログインしました')
     bot_guilds = len(client.guilds)
+    bot_members = []
+    for guild in client.guilds:
+      for member in guild.members:
+        if member.bot:
+          pass
+        else:
+          bot_members.append(member)
     activity = discord.Streaming(name='o.help でヘルプ | ' + str(bot_guilds) + ' Guilds ', url="https://www.twitch.tv/discord")
     await client.change_presence(activity=activity)
     #起動メッセージをHereBots Hubに送信（チャンネルが存在しない場合、スルー）
     try:
       ready_log = client.get_channel(800380094375264318)
-      embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\nサーバー数: " + str(bot_guilds), timestamp=datetime.datetime.now())
-      embed.set_footer(text="Aoi",icon_url=ICON)
+      embed = discord.Embed(title="Aoi 起動完了",description="**Aoi#3869** が起動しました。\n```サーバー数: " + str(bot_guilds) + "\nユーザー数: " + str(len(bot_members)) + "```", timestamp=datetime.datetime.now())
+      embed.set_footer(text="Aoi - Ver" + Bot_Version,icon_url=ICON)
       await ready_log.send(embed=embed)
     except:
       pass
@@ -110,11 +118,11 @@ async def on_message(message):
       prefix = str(guilds_info[str(message.guild.id)]['prefix'])
 
     #チャンネルを削除するとリストに残ったままでバグるやつを直す為（joinに組み込み・try）
-    if message.content == "pong":
-      fas = await client.fetch_channel(message.channel.id)
-      fs2 = await client.fetch_webhook(807460584299823124)
-      print(fs2)
-      print(fas)
+    #if message.content == "pong":
+    #  fas = await client.fetch_channel(message.channel.id)
+    #  fs2 = await client.fetch_webhook(807460584299823124)
+    #  print(fs2)
+    #  print(fas)
 
 
     GLOBAL_CH_NAME = "aoi-global" #グローバルチャットのチャンネル名
