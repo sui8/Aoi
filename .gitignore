@@ -1,0 +1,6 @@
+/data/
+/__pycache__/
+/.replit.bk
+/start.sh
+/commands/__pycache/
+/.env

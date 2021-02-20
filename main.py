@@ -90,6 +90,26 @@ def talkapi(message):
   talk_reply = talkclient.talk(message)
   return talk_reply['results'][0]['reply']
 
+#グローバルチャットが削除されていた時の対処
+#・メッセージ送信時に検知（ギルド消えorチャンネル消え）
+#解除コマンドも欲しい。（全てリストから削除。これは簡単だが、Webhookが...）
+#GiveAway機能も欲しい
+'''
+if message.content == prefix + 'leave':
+  #実行者に管理者権限があるか
+  if not message.author.guild_permissions.administrator == True:
+    embed = discord.Embed(title=":x: エラー",description="あなたには管理者権限がないため、このコマンドを実行する権限がありません。",color=0xff0000)
+    await message.channel.send(embed=embed)
+  else:
+    #グローバルチャットリスト読み込み
+    with open('data/globals.json', encoding='utf-8') as f:
+        globals = json.load(f)
+    global_leave_ch = globals[str(message.guild.id)]['channel']
+    global_leave_wh = globals[str(message.guild.id)]['webhook']
+
+    webhook = discord.utils.get(ch_webhooks, id=webhook_id)
+
+'''
 
 
 #メッセージ受信時に動作する処理
