@@ -15,7 +15,7 @@ import threading
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 default_prefix = 'o.' #デフォルトPrefix
-Bot_Version = '3.2.0'
+Bot_Version = '3.2.1'
 Verifymode = 0
 ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
@@ -1095,6 +1095,7 @@ async def on_message(message):
         embed = discord.Embed(title="グローバル認証申請",description="Name: " + str(v_name) + "\nID: " + str(v_id) ,color=0x00ff00)
         user = client.get_user(OWNER_ID)
         await user.send(embed=embed)
+        await message.add_reaction(":finish:798910961255317524")
         embed = discord.Embed(title=":white_check_mark: 完了",description="グローバルチャット認証申請が完了しました。一週間以内に結果を送信致します。",color=0x00ff00)
         await message.author.send(embed=embed)
         
