@@ -15,7 +15,7 @@ import threading
 TOKEN = os.getenv("TOKEN") #トークン
 prefix = 'o.' #Prefix
 default_prefix = 'o.' #デフォルトPrefix
-Bot_Version = '3.2.1'
+Bot_Version = '3.2.2'
 Verifymode = 0
 ICON = os.getenv("ICON") #AoiアイコンURL
 STICKER_URL = os.getenv("STICKER_URL") #ステッカー保管場所URL
@@ -205,7 +205,7 @@ async def on_message(message):
 
         #グローバルチャットチャンネル切り替え
         if str(message.guild.id) in globals:
-          if str(message.channel.id) == globals[str(message.guild.id)]["channel"]:
+          if int(message.channel.id) == int(globals[str(message.guild.id)]["channel"]):
             embed = discord.Embed(title=":x: エラー",description="既にこのサーバーはグローバルチャットに登録されています。",color=0xff0000)
             await message.channel.send(embed=embed)
           else:
@@ -214,9 +214,20 @@ async def on_message(message):
             except:
               old_globalchannel = "Deleted Channel"
 
-            globals[str(message.guild.id)]["channel"] = message.channel.id
-            await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
-            get_webhook = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+            #旧グローバルWebhookを取得して削除
+            old_global_id = int(globals[str(message.guild.id)]["channel"])
+            old_global_webhook = int(globals[str(message.guild.id)]["webhook"])
+
+            #新グローバル作成準備
+            globals[str(message.guild.id)]["channel"] = int(message.channel.id)
+            get_webhook = await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
+
+            #旧グローバル削除
+            channel = client.get_channel(old_global_id)
+            ch_webhooks = await channel.webhooks()
+            webhook = discord.utils.get(ch_webhooks, id=old_global_webhook)
+            await webhook.delete()
+
             new_webhook = await client.fetch_webhook(re.sub("\\D", "", str(get_webhook)))
             globals[str(message.guild.id)]["webhook"] = int(re.sub("\\D", "", str(new_webhook)))
             #JSONに書き込み（更新）
@@ -725,8 +736,7 @@ async def on_message(message):
         try:
           await client.fetch_webhook(int(globals[str(message.guild.id)]["webhook"]))
         except:
-          await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
-          get_webhook = discord.utils.get(await message.channel.webhooks(), name=GLOBAL_WEBHOOK_NAME)
+          get_webhook = await message.channel.create_webhook(name=GLOBAL_WEBHOOK_NAME)
           new_webhook = await client.fetch_webhook(re.sub("\\D", "", str(get_webhook)))
           globals[str(message.guild.id)]["webhook"] = re.sub("\\D", "", str(new_webhook))
 
@@ -1104,7 +1114,6 @@ async def on_message(message):
         embed = discord.Embed(title="招待リンク",description="こちらのリンクから、サーバー管理権限を持ったユーザーでAoiの招待が出来ます。（Aoiの権限: 管理者 ＜必須＞）\n\n**https://www.herebots.ml/aoi**",color=0xdda0dd)
         await message.channel.send(embed=embed)
 
-        
 '''
 #メッセージが削除された時のイベント
 @client.event
