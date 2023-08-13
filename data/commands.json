@@ -9,49 +9,9 @@
         "usage" : "invite",
         "info": "Aoi招待リンクを表示します。"
     },
-    "prefix": {
-        "category": "🤖Botコマンド",
-        "usage" : "prefix",
-        "info": "このサーバーでのPrefixを表示します。"
-    },
-    "setprefix": {
-        "category": "🤖Botコマンド",
-        "usage" : "setprefix <新しいPrefix or reset>",
-        "info": "このサーバーでのPrefixを変更します。（管理者権限必須）"
-    },
-    "join": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "join",
-        "info": "グローバルチャットに参加したいチャンネルで実行すると、グローバルチャットに参加できます。（管理者権限必須）"
-    },
-    "verify": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "verify",
-        "info": "グローバルチャットでのアカウントの認証申請を行います。"
-    },
-    "globallist": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "globallist",
-        "info": "グローバルチャットに接続しているサーバー一覧を表示します。"
-    },
-    "gban": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "gban <ユーザーID> [理由]",
-        "info": "ユーザーのグローバルチャットBANを実行します。（Aoiモデレーター権限必須）"
-    },
-    "ungban": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "ungban <ユーザーID>",
-        "info": "ユーザーのグローバルチャットBAN解除を実行します。（Aoiモデレーター権限必須）"
-    },
-    "gbanlist": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "gbanlist",
-        "info": "グローバルチャットBANされているユーザー一覧を表示します。"
-    },
-    "gbaninfo": {
-        "category": "🌐グローバルチャットコマンド",
-        "usage" : "gbaninfo <ユーザーID>",
-        "info": "グローバルチャットBANされているユーザー情報を表示します。"
-    } 
+    "ping": {
+    "category": "🤖Botコマンド",
+    "usage" : "ping",
+    "info": "AoiのPingを表示します。"
+    }
 }
