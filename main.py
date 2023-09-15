@@ -585,9 +585,5 @@ try:
 
 except:
   os.system("kill 1")
-db["VERIFIED"] = "value"
-db["VERIFIED"] = "2"
-db["VERIFIED"] = "2"
-db["VERIFIED"] = "2"
 db["VERIFIED"] = "2"
 db["VERIFIED"] = "256565"
